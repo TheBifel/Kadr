@@ -1,7 +1,7 @@
 # План реалізації
 
 1. Специфікація й acceptance matrix до реалізації.
-2. Kotlin + platform UI, AGP 9.1.0 / Gradle 9.3.1 з наявного toolchain. WorkManager для persistent work.
+2. Kotlin + Jetpack Compose UI, AGP 9.1.0 / Gradle 9.3.1 з наявного toolchain. WorkManager для persistent work.
 3. Репозиторій проєктів, binding та атомарних кадрів; версії конфігурації й mutex.
 4. Software WebView на main looper поза Activity, обмежений SDK, явна готовність і завершення процесу рендерингу. Перевірити найризикованіший background render instrumentation-тестом.
 5. RemoteViews ImageView + native footer, конфігурація та pin, resize/restore/boot.
