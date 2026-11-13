@@ -4,3 +4,6 @@ local.properties
 artifacts/
 *.iml
 .idea/
+
+__pycache__/
+*.pyc

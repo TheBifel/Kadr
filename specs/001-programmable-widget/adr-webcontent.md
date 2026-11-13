@@ -6,7 +6,7 @@ WebContent відокремлює стан рушія від View/Activity. Пі
 
 Рішення MVP: одноразовий Android WebView з application context на main looper усередині обмеженого WorkManager-завдання. Життєвий цикл закінчується після ready/capture/error/timeout. Не тримати engine постійно й не відкривати Activity з boot receiver. Такий шлях перевірити на реальному емуляторі без відкриття Activity. Alpha-залежність, яка не дає потрібного шляху, до runtime не додається. Renderer відокремлений від UI й scheduler; його можна замінити після появи відповідного API.
 
-Інтерфейс застосунку — Jetpack Compose. Android widget host отримує RemoteViews з bitmap та native footer; це обмеження API домашнього екрана.
+Інтерфейс застосунку — Jetpack Compose. Оболонка віджета описується на Jetpack Glance, який генерує RemoteViews з bitmap і native footer для системного host.
 
 Джерела:
 - https://developer.android.com/jetpack/androidx/releases/web
