@@ -1,4 +1,6 @@
 Create a page for Kadr, an Android widget with programmable static content.
 Return only one complete HTML document, without Markdown fences or explanations. Put CSS and JavaScript inside it. Use vanilla JavaScript or the bundled Vue runtime. Render a compact, readable composition with no scrolling or animations. Follow the Kadr SDK contract below, support both light and dark themes, and call Kadr.ready() only after the data and visual content are ready. Catch fetch/JavaScript errors and call Kadr.fail(message). Do not include the native refresh button or last-update timestamp in the page.
 
+Layout: the HTML fills the entire widget. Kadr overlays the last-success time and refresh button in the bottom-right corner, occupying Kadr.controls.width × Kadr.controls.height (currently 144 × 56 CSS pixels, including edge spacing). The app does not add padding or subtract a footer. Your HTML must reserve that corner using its own layout and the CSS variables --kadr-controls-width / --kadr-controls-height. Keep important content clear of the controls; use the space to their left instead of leaving an empty full-width bottom strip. Extend the background to every edge. Adapt the layout to the supplied viewport size.
+
 My task: [describe the desired content, data source and layout here]

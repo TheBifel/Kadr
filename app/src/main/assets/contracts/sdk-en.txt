@@ -5,18 +5,21 @@ Input: one complete HTML document with inline CSS and JavaScript. Each update st
 Available globals:
 • Kadr.theme: "light" or "dark", resolved from the widget settings and system theme.
 • Kadr.locale: "en" or "uk", the app language.
-• Kadr.width / Kadr.height: available content size in CSS pixels. The native footer is outside this size.
+• Kadr.width / Kadr.height: the full widget viewport in CSS pixels, including the area behind native controls. No footer height is subtracted.
+• Kadr.controls.width / Kadr.controls.height: the bottom-right control area, currently 144 × 56 CSS pixels including edge spacing.
 • await Kadr.ready(): call once after all asynchronous work and DOM/Vue/Canvas updates are complete. Kadr waits for fonts and images before capturing.
 • Kadr.fail(message): abort this update and retain the last successful frame.
 
 CSS tokens: --kadr-bg, --kadr-fg, --kadr-muted, --kadr-accent.
 Use these for automatic light/dark appearance. Fit all content into the available size. Kadr supplies the viewport.
 
+Native controls overlay the page in its bottom-right corner: last-success time and a refresh button with a 48 × 48 touch target. There is no separate footer strip or automatic HTML padding. Your HTML must keep important text and graphics out of this corner. The same dimensions are available as CSS variables --kadr-controls-width and --kadr-controls-height. Reserve this corner in your own layout; space to its left remains usable. Paint your background across the whole viewport. Adapt to Kadr.width/height and smaller widget sizes. Do not add an empty full-width footer just to make room for the controls.
+
 Network: fetch over HTTPS with normal browser CORS rules. Check response.ok and handle errors. Do not embed real credentials in shared templates. The page must finish within 15 seconds.
 
 Vue: <script src="https://kadr.local/vue.global.prod.js"></script>
 The runtime is bundled and works offline. Put Vue bindings inside the mount container. After mounting/updating, use Vue.nextTick(() => Kadr.ready()).
 
-Do not draw the refresh button or the last-update timestamp: Kadr provides them in its native footer. Do not request Android permissions, open windows, access device files or depend on localStorage. Keep state on the data source; each render is a fresh execution.
+Do not draw the refresh button or the last-update timestamp: Kadr overlays them natively. Do not request Android permissions, open windows, access device files or depend on localStorage. Keep state on the data source; each render is a fresh execution.
 
 Network jobs wait for a connection. A fully local page may opt into offline rendering with <meta name="kadr-network" content="none">. Do not use that opt-out for pages that call an API.

@@ -41,7 +41,7 @@
 <string name="light_theme">Світла</string>
 <string name="dark_theme">Темна</string>
 <string name="corners">Заокруглення</string>
-<string name="footer_hint">Час і кнопка оновлення розташовані поруч у нижньому правому кутку.</string>
+<string name="footer_hint">Час і кнопка оновлення накладаються в нижньому правому кутку. Місце під них залишає HTML.</string>
 <string name="updates_title">Коли оновлювати кадр?</string>
 <string name="preferred_interval">Бажаний інтервал</string>
 <string name="wifi_only">Фонові оновлення через Wi-Fi</string>

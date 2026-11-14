@@ -4,6 +4,8 @@ import org.json.JSONObject
 import java.util.UUID
 
 object Policy {
+    const val controlsWidth = 144
+    const val controlsHeight = 56
     val intervals = listOf(0, 15, 30, 60, 180, 360, 1440)
     fun needsNetwork(html: String): Boolean = !Regex("""<meta\b(?=[^>]*\bname\s*=\s*["']kadr-network["'])(?=[^>]*\bcontent\s*=\s*["']none["'])[^>]*>""",RegexOption.IGNORE_CASE).containsMatchIn(html)
     fun validInterval(minutes: Int) = minutes in intervals

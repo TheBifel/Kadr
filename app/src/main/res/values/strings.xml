@@ -41,7 +41,7 @@
 <string name="light_theme">Light</string>
 <string name="dark_theme">Dark</string>
 <string name="corners">Corner radius</string>
-<string name="footer_hint">The timestamp and refresh button stay together in the lower right corner.</string>
+<string name="footer_hint">The timestamp and refresh button overlay the lower right corner. Leave space for them in your HTML.</string>
 <string name="updates_title">When should the frame refresh?</string>
 <string name="preferred_interval">Preferred interval</string>
 <string name="wifi_only">Background updates on Wi-Fi</string>

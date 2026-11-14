@@ -12,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.glance.LocalSize
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
@@ -25,6 +24,7 @@ import androidx.glance.background
 import androidx.glance.layout.*
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import androidx.glance.text.TextAlign
 import androidx.glance.unit.ColorProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -67,21 +67,19 @@ class KadrGlanceWidget: GlanceAppWidget() {
             val tick by changes.collectAsState(initial=0L)
             val localized=LocaleSupport.localized(context)
             val project=remember(tick) { repo.binding(widgetId)?.let { repo.get(it) } }
-            val compact=LocalSize.current.width<260.dp
             val frame=remember(tick) { project?.let { repo.result(it.id) } ?: FrameState() }
             val bitmap=remember(frame.file) { project?.let { repo.bitmap(it.id) } }
             val bg=Color(if(project?.isDark(context)==true)0xFF222B1B else 0xFFF2F4E9)
             val muted=Color(if(project?.isDark(context)==true)0xFFB8C9A4 else 0xFF69765B)
             val open=if(project==null)Intent(context,ConfigureActivity::class.java).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,widgetId)
                 else Intent(context,MainActivity::class.java).putExtra("project",project.id).setData(android.net.Uri.parse("kadr://edit/${project.id}"))
-            Column(GlanceModifier.fillMaxSize().background(bg).cornerRadius((project?.radius ?: 24).dp).appWidgetBackground()) {
-                if(bitmap!=null)Image(ImageProvider(bitmap),localized.getString(R.string.frame_description,project?.name ?: "Kadr",WidgetUi.stamp(frame.success)),GlanceModifier.fillMaxWidth().defaultWeight().clickable(actionStartActivity(open)),contentScale=ContentScale.Fit)
-                else Box(GlanceModifier.fillMaxWidth().defaultWeight().clickable(actionStartActivity(open)),contentAlignment=Alignment.Center) {
+            Box(GlanceModifier.fillMaxSize().background(bg).cornerRadius((project?.radius ?: 24).dp).appWidgetBackground(),contentAlignment=Alignment.BottomEnd) {
+                if(bitmap!=null)Image(ImageProvider(bitmap),localized.getString(R.string.frame_description,project?.name ?: "Kadr",WidgetUi.stamp(frame.success)),GlanceModifier.fillMaxSize().clickable(actionStartActivity(open)),contentScale=ContentScale.Fit)
+                else Box(GlanceModifier.fillMaxSize().clickable(actionStartActivity(open)),contentAlignment=Alignment.Center) {
                     Text(if(project==null)localized.getString(R.string.choose_page) else localized.getString(R.string.waiting_first),style=TextStyle(color=ColorProvider(muted),fontSize=13.sp))
                 }
-                Row(GlanceModifier.fillMaxWidth().height(48.dp).padding(start=14.dp),verticalAlignment=Alignment.CenterVertically) {
-                    if(compact)Spacer(GlanceModifier.defaultWeight()) else Text(project?.name?.uppercase(Locale.getDefault()) ?: "Kadr",GlanceModifier.defaultWeight(),style=TextStyle(color=ColorProvider(muted),fontSize=9.sp),maxLines=1)
-                    Text(when { frame.pending>0L->if(compact)"↻ "+WidgetUi.stamp(frame.success) else localized.getString(R.string.updating_at,WidgetUi.stamp(frame.success));frame.success==0L -> localized.getString(R.string.no_frame);frame.error.isNotEmpty()->if(compact)"! "+WidgetUi.stamp(frame.success) else localized.getString(R.string.failed_at,WidgetUi.stamp(frame.success));else->if(compact)WidgetUi.stamp(frame.success) else localized.getString(R.string.updated_at,WidgetUi.stamp(frame.success)) },style=TextStyle(color=ColorProvider(muted),fontSize=10.sp),maxLines=1)
+                Row(GlanceModifier.width(Policy.controlsWidth.dp).height(Policy.controlsHeight.dp).padding(end=8.dp,bottom=8.dp),verticalAlignment=Alignment.CenterVertically) {
+                    Text(WidgetUi.overlayStamp(frame),GlanceModifier.defaultWeight(),style=TextStyle(color=ColorProvider(muted),fontSize=10.sp,textAlign=TextAlign.End),maxLines=1)
                     if(project!=null) {
                         val refresh=Intent(context,RefreshReceiver::class.java).putExtra("project",project.id).setData(android.net.Uri.parse("kadr://refresh/$widgetId")).addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
                         Box(GlanceModifier.size(48.dp).clickable(actionSendBroadcast(refresh)),contentAlignment=Alignment.Center) {
@@ -101,7 +99,7 @@ object WidgetUi {
         if(ids.isEmpty())return 320 to 160
         val sizes=ids.map { mgr.getAppWidgetOptions(it) }.map { b ->
             b.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,320).coerceIn(140,640) to
-                (b.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT,220)-48).coerceIn(70,640)
+                b.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT,220).coerceIn(70,640)
         }
         return sizes.maxOf { it.first } to sizes.maxOf { it.second }
     }
@@ -110,6 +108,11 @@ object WidgetUi {
         if(ids.isNotEmpty())context.sendBroadcast(Intent(context,FrameUpdateReceiver::class.java).putExtra("ids",ids))
     }
     fun update(context: Context,id: Int) { context.sendBroadcast(Intent(context,FrameUpdateReceiver::class.java).putExtra("ids",intArrayOf(id))) }
+    fun overlayStamp(frame: FrameState): String = when {
+        frame.pending>0L -> "↻ "+stamp(frame.success)
+        frame.error.isNotEmpty() -> "! "+stamp(frame.success)
+        else -> stamp(frame.success)
+    }
     fun stamp(time: Long): String = if(time==0L)"—" else SimpleDateFormat("HH:mm:ss",Locale.getDefault()).format(Date(time))
 }
 

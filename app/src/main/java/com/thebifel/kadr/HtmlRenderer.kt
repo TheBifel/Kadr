@@ -123,9 +123,9 @@ class HtmlRenderer(private val context: Context, private val resourceLoader: ((U
             val accent=if(dark)"#c8ed7e" else "#a6c566"
             val inject="""
                 <meta name="viewport" content="width=$widthDp, initial-scale=1, maximum-scale=1">
-                <style>:root{--kadr-bg:$bg;--kadr-fg:$fg;--kadr-muted:$muted;--kadr-accent:$accent;color-scheme:${if(dark)"dark" else "light"}}html,body{margin:0;overflow:hidden;background:var(--kadr-bg);color:var(--kadr-fg)}*{animation:none!important;transition:none!important;box-sizing:border-box}::-webkit-scrollbar{display:none}</style>
+                <style>:root{--kadr-bg:$bg;--kadr-fg:$fg;--kadr-muted:$muted;--kadr-accent:$accent;--kadr-controls-width:${Policy.controlsWidth}px;--kadr-controls-height:${Policy.controlsHeight}px;color-scheme:${if(dark)"dark" else "light"}}html,body{margin:0;overflow:hidden;background:var(--kadr-bg);color:var(--kadr-fg)}*{animation:none!important;transition:none!important;box-sizing:border-box}::-webkit-scrollbar{display:none}</style>
                 <script>
-                window.Kadr=Object.freeze({locale:'${LocaleSupport.language(context)}',theme:'${if(dark)"dark" else "light"}',width:$widthDp,height:$heightDp,
+                window.Kadr=Object.freeze({locale:'${LocaleSupport.language(context)}',theme:'${if(dark)"dark" else "light"}',width:$widthDp,height:$heightDp,controls:Object.freeze({width:${Policy.controlsWidth},height:${Policy.controlsHeight}}),
                     ready:async function(){try{await document.fonts.ready;await Promise.all(Array.from(document.images).map(i=>i.decode()));__KadrSignal.ready();}catch(e){__KadrSignal.fail(${org.json.JSONObject.quote(localized.getString(R.string.render_resource_failed))}+e.message);}},
                     fail:function(message){__KadrSignal.fail(String(message));}});
                 window.addEventListener('error',e=>Kadr.fail(e.message||${org.json.JSONObject.quote(localized.getString(R.string.js_failed))}));

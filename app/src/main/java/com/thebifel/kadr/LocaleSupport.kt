@@ -15,5 +15,6 @@ object LocaleSupport {
 }
 object ContractText {
     fun contract(context: Context)=context.assets.open("contracts/sdk-${LocaleSupport.language(context)}.txt").bufferedReader().use { it.readText() }
-    fun aiInstructions(context: Context)=context.assets.open("contracts/ai-${LocaleSupport.language(context)}.txt").bufferedReader().use { it.readText() }+"\n\n"+contract(context)
+    fun aiInstructions(context: Context)=context.assets.open("contracts/ai-en.txt").bufferedReader().use { it.readText() }+"\n\n"+
+        context.assets.open("contracts/sdk-en.txt").bufferedReader().use { it.readText() }
 }

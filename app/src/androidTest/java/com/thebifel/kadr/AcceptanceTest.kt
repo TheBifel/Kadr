@@ -88,7 +88,11 @@ class AcceptanceTest {
             assertEquals("Kadr",localized.getString(R.string.app_name))
             val contract=ContractText.contract(localized)
             assertTrue(contract.contains("Kadr.ready()"));assertTrue(contract.contains("Kadr.locale"))
-            assertTrue(ContractText.aiInstructions(localized).contains(contract))
+            val english=context.assets.open("contracts/sdk-en.txt").bufferedReader().use { it.readText() }
+            val instructions=ContractText.aiInstructions(localized)
+            assertTrue(instructions.startsWith("Create a page for Kadr"))
+            assertTrue(instructions.contains(english));assertTrue(instructions.contains("bottom-right"))
+            assertEquals(ContractText.aiInstructions(context),instructions)
             assertEquals(if(language=="uk")"Копіювати ШІ інструкції" else "Copy AI instructions",localized.getString(R.string.copy_ai))
         }
     }
@@ -102,6 +106,16 @@ class AcceptanceTest {
             val bitmap=HtmlRenderer(themed).render(project)
             assertEquals(Color.parseColor(if(dark)"#222b1b" else "#f2f4e9"),bitmap.getPixel(bitmap.width/2,bitmap.height/2));bitmap.recycle()
         }
+    }
+    @Test fun overlayContractUsesFullViewportWithoutInjectedPadding()=runBlocking {
+        val source="""<html><head></head><body style="width:100vw;height:100vh;background:#ff0000"><script>
+          const css=getComputedStyle(document.documentElement);
+          const valid=Kadr.width===320 && Kadr.height===220 && Kadr.controls.width===144 && Kadr.controls.height===56 && css.getPropertyValue('--kadr-controls-width').trim()==='144px' && css.getPropertyValue('--kadr-controls-height').trim()==='56px' && getComputedStyle(document.body).paddingBottom==='0px';
+          document.body.style.background=valid?'#0000ff':'#ff0000';Kadr.ready();
+        </script></body></html>"""
+        val bitmap=HtmlRenderer(context).render(Project(html=source),320,220)
+        assertEquals(Color.BLUE,bitmap.getPixel(0,bitmap.height-1))
+        assertEquals(Color.BLUE,bitmap.getPixel(bitmap.width-1,bitmap.height-1));bitmap.recycle()
     }
     @Test fun ac12_refreshPendingDoesNotTouchTheCachedFrame()=runBlocking {
         val repo=Repository(context);val p=Project(id="test-"+UUID.randomUUID(),html=html("#ff0000"));repo.save(p)

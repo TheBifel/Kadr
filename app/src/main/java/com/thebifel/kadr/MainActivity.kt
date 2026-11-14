@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
@@ -243,14 +244,13 @@ class MainActivity: LocalizedActivity() {
                         }
                         val cardBg=Color(if(effectiveDark)0xFF222B1B else 0xFFF2F4E9)
                         val cardMuted=Color(if(effectiveDark)0xFFB8C9A4 else 0xFF69765B)
-                        Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(draft.radius.dp)).background(cardBg)) {
-                            if(image!=null)Image(image,S(R.string.frame_content),Modifier.fillMaxWidth().height(158.dp),contentScale=ContentScale.Fit)
-                            else Box(Modifier.fillMaxWidth().height(158.dp),contentAlignment=Alignment.Center){Text(S(if(previewBusy)R.string.building_preview else R.string.first_frame),fontSize=13.sp,color=cardMuted)}
-                            Row(Modifier.fillMaxWidth().height(48.dp).padding(start=14.dp),verticalAlignment=Alignment.CenterVertically) {
-                                Text("Kadr",color=cardMuted,fontSize=9.sp)
-                                Spacer(Modifier.weight(1f))
-                                Text(when{showDraft->S(R.string.draft_label);waiting->S(R.string.updating_at,WidgetUi.stamp(frame.success));frame.success>0->S(if(frame.error.isEmpty())R.string.updated_at else R.string.failed_at,WidgetUi.stamp(frame.success));else->S(R.string.no_frame)},color=cardMuted,fontSize=10.sp)
-                                IconButton(onClick={if(dirty)previewDraft(draft) else Schedule.now(this@MainActivity,draft)},enabled=!previewBusy,modifier=Modifier.semantics { contentDescription=getString(R.string.update_frame) }){Text("↻",fontSize=26.sp,color=Color(0xFF7E9C4D))}
+                        val ratio=if(image!=null)image.width.toFloat()/image.height else 2f
+                        Box(Modifier.fillMaxWidth().aspectRatio(ratio).clip(RoundedCornerShape(draft.radius.dp)).background(cardBg)) {
+                            if(image!=null)Image(image,S(R.string.frame_content),Modifier.matchParentSize(),contentScale=ContentScale.FillBounds)
+                            else Box(Modifier.matchParentSize(),contentAlignment=Alignment.Center){Text(S(if(previewBusy)R.string.building_preview else R.string.first_frame),fontSize=13.sp,color=cardMuted)}
+                            Row(Modifier.align(Alignment.BottomEnd).width(Policy.controlsWidth.dp).height(Policy.controlsHeight.dp).padding(end=8.dp,bottom=8.dp),verticalAlignment=Alignment.CenterVertically) {
+                                Text(if(showDraft)S(R.string.draft_label) else WidgetUi.overlayStamp(frame),modifier=Modifier.weight(1f),color=cardMuted,fontSize=10.sp,maxLines=1,textAlign=TextAlign.End)
+                                IconButton(onClick={if(dirty)previewDraft(draft) else Schedule.now(this@MainActivity,draft)},enabled=!previewBusy,modifier=Modifier.size(48.dp).semantics { contentDescription=getString(R.string.update_frame) }){Text("↻",fontSize=26.sp,color=Color(0xFF7E9C4D))}
                             }
                         }
                         Text(S(R.string.static_caption),fontSize=10.sp,color=Muted)
