@@ -29,7 +29,7 @@ Preview refresh now has its own successful timestamp and does not mark an unchan
 
 - Gitleaks 8.30.1: zero findings in the public source candidate and extracted APK assets/DEX strings (`secrets-source.json`, `secrets-apk.json`). No credentials, private signing keys, emulator state or local reports are distributed.
 - Debug APK SHA-256: `05fb824e479a2885b9b40dc172218e708d7f46cc962efe391801e2188dcf00fb`.
-- Release assets: `Kadr-1.1.0-debug.apk`, `SHA256SUMS`, `LICENSE`, `NOTICE`. Publication and anonymous download verification are recorded after the release is created.
+- Published public release: [v1.1.0](https://github.com/TheBifel/Kadr/releases/tag/v1.1.0), with `Kadr-1.1.0-debug.apk`, `SHA256SUMS`, `LICENSE` and `NOTICE`. The APK and checksum were downloaded anonymously from their public release URLs and matched the tested local artifact exactly (`download-verification.json`). The local distribution copy was independently checked against the same SHA-256. Release tag points to `74fd5ea`; the subsequent verification-only documentation commit does not change application code or APK bytes.
 
 ## Limits
 
