@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Small adb UI helper for emulator acceptance evidence; no production hooks."""
 import re, subprocess, sys, time, xml.etree.ElementTree as ET
-ADB='/home/aiagent/.local/share/bubnilka-toolchain/android-sdk/platform-tools/adb'
-def adb(*args): return subprocess.check_output([ADB,'-s','emulator-5554',*args])
+import os, shutil
+ADB=shutil.which('adb') or 'adb'
+SERIAL=os.environ.get('ANDROID_SERIAL', 'emulator-5554')
+def adb(*args): return subprocess.check_output([ADB,'-s',SERIAL,*args])
 def nodes():
     for attempt in range(4):
         adb('shell','rm','-f','/sdcard/kadr-ui.xml')

@@ -1,4 +1,8 @@
-plugins { id("com.android.application"); id("org.jetbrains.kotlin.plugin.compose") }
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.plugin.compose")
+}
+
 android {
     namespace = "com.thebifel.kadr"
     compileSdk = 36
@@ -6,14 +10,42 @@ android {
         applicationId = "com.thebifel.kadr"
         minSdk = 31
         targetSdk = 36
-        versionCode = 5
-        versionName = "0.1.4"
+        versionCode = 6
+        versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-    buildFeatures { buildConfig = true; compose = true }
-    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
+    signingConfigs.getByName("debug") {
+        val externalKey =
+            providers.environmentVariable("KADR_DEBUG_KEYSTORE_PATH").orNull?.takeIf {
+                it.isNotBlank()
+            }
+        if (externalKey != null) {
+            fun required(name: String) =
+                requireNotNull(
+                    providers.environmentVariable(name).orNull?.takeIf { it.isNotBlank() }
+                ) {
+                    "Missing signing environment variable: $name"
+                }
+            storeFile = file(externalKey)
+            storePassword = required("KADR_DEBUG_STORE_PASSWORD")
+            keyAlias = required("KADR_DEBUG_KEY_ALIAS")
+            keyPassword = required("KADR_DEBUG_KEY_PASSWORD")
+        }
+    }
+    buildFeatures {
+        buildConfig = true
+        compose = true
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 }
+
 dependencies {
+    implementation(project(":domain"))
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.0")
     implementation(platform("androidx.compose:compose-bom:2025.08.01"))
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.compose.ui:ui")

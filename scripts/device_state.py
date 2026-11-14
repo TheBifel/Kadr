@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Read only public-demo verification metadata, without copying HTML or credentials."""
 import hashlib,json,re,subprocess,sys,xml.etree.ElementTree as ET
-ADB='/home/aiagent/.local/share/bubnilka-toolchain/android-sdk/platform-tools/adb'
+import os, shutil
+ADB=shutil.which('adb') or 'adb'
+SERIAL=os.environ.get('ANDROID_SERIAL', 'emulator-5554')
 PKG='com.thebifel.kadr'
-def adb(*args):return subprocess.check_output([ADB,'-s','emulator-5554',*args])
+def adb(*args):return subprocess.check_output([ADB,'-s',SERIAL,*args])
 def state():
     root=ET.fromstring(adb('shell','run-as',PKG,'cat','shared_prefs/kadr.xml'))
     out={'projects':{},'frames':{},'bindings':{}}

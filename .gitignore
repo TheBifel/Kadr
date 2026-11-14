@@ -8,3 +8,17 @@ artifacts/
 
 __pycache__/
 *.pyc
+
+# Local configuration and signing material
+.env*
+!.env.example
+*.keystore
+*.jks
+*.p12
+*.key
+*.pem
+captures/
+*.apk
+*.aab
+*.hprof
+.DS_Store

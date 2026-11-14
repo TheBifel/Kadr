@@ -10,4 +10,4 @@
 8. Емулятор: launcher pin, refresh, OS job, кілька віджетів, справжній reboot. Скріншоти кожного значущого етапу.
 9. Фіксація перевірок, APK, README та канонічного посилання в knowledge.
 
-Код у /home/aiagent/kadr на CT107 — поряд з іншими Android-проєктами. Наявний AVD не очищувати. Для KVM запускати emulator як aiagent з групою kvm через pct exec; налаштування доступу host не змінювати. Залежності та Gradle використовують наявний SDK/JDK; emulator і Gradle обмежити за пам’яттю.
+Build and emulator setup are documented in [Building](../../docs/BUILDING.md). Preserve existing AVD data when testing an upgrade.

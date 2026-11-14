@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd /home/aiagent
-export XDG_RUNTIME_DIR=/home/aiagent/.android/kadr-runtime
-mkdir -p "$XDG_RUNTIME_DIR"
-chmod 700 "$XDG_RUNTIME_DIR"
-exec /home/aiagent/.local/share/bubnilka-toolchain/android-sdk/emulator/emulator @bubnilka_api35 -no-window -no-audio -gpu swiftshader -no-boot-anim -camera-back none -camera-front none -cores 2 -memory 2560 -no-snapshot-load -no-snapshot-save
+KADR_AVD="${1:?Usage: scripts/emulator.sh AVD_NAME}"
+KADR_SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:?Set ANDROID_HOME or ANDROID_SDK_ROOT}}"
+exec "$KADR_SDK/emulator/emulator" -avd "$KADR_AVD" -no-window -no-audio -gpu swiftshader -no-boot-anim -camera-back none -camera-front none -cores 2 -memory 2560 -no-snapshot-load -no-snapshot-save

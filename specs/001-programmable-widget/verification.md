@@ -1,6 +1,6 @@
 # Перевірки Kadr
 
-Середовище: CT107 на Proxmox, існуючий AVD `bubnilka_api35`, Android API35 x86_64, launcher Pixel. Дані AVD не очищалися. Логи й знімки нижче — локальні файли в `/home/aiagent/kadr/artifacts/`, поза Git.
+Середовище: існуючий Android AVD, Android API35 x86_64, launcher Pixel. Дані AVD не очищалися. Логи й знімки нижче — локальні файли в `artifacts/`, поза Git.
 
 ## 0.1.2 — 2026-11-13
 
