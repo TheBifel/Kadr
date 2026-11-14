@@ -7,4 +7,5 @@ data class EditorPlatformActions(
     val copyAi: () -> Unit,
     val copyContract: () -> Unit,
     val contractText: String,
+    val aiText: String,
 )

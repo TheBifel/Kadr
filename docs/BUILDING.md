@@ -42,6 +42,6 @@ These values are read from the environment. Keystores, `.env.local`, tokens and 
 
 ## Release
 
-Build and verify the APK, copy it under a versioned filename, generate a SHA-256 checksum and attach both to the matching release. The 1.0.0 download is a debug build, not a Play Store package. Check packaged assets and compare the signing certificate with the previous release before distributing an update.
+Build and verify the APK, copy it under a versioned filename, generate a SHA-256 checksum and attach both to the matching release. Downloads are debug builds, not Play Store packages. Check packaged assets and compare the signing certificate with the previous release before distributing an update.
 
-See [1.0.0 verification](../specs/002-architecture-release/verification.md) for the actual tested environment and limits.
+See [1.1.0 verification](../specs/003-minimal-editor/verification.md) for the actual tested environment and limits.

@@ -25,7 +25,14 @@ class EditorViewModel(
     private val deleteProject: DeleteProject,
     private val requestRefresh: RequestRefresh,
 ) : ViewModel() {
-    private data class Preview(val html: String, val dark: Boolean, val image: FrameImage)
+    private data class Preview(
+        val html: String,
+        val dark: Boolean,
+        val radius: Int,
+        val locale: String,
+        val image: FrameImage,
+        val time: Long,
+    )
 
     private data class DraftSession(
         var project: Project,
@@ -39,6 +46,7 @@ class EditorViewModel(
     private val sessions = mutableMapOf<String, DraftSession>()
     private val previewJobs = mutableMapOf<String, Job>()
     private val images = mutableMapOf<String, Pair<String, FrameImage?>>()
+    private val frameSources = mutableMapOf<String, Pair<String, Project>>()
     private var selectedId: String? = null
     private val mutableState = MutableStateFlow(EditorUiState())
     val state = mutableState.asStateFlow()
@@ -52,17 +60,27 @@ class EditorViewModel(
     fun onEvent(event: EditorEvent) {
         when (event) {
             is EditorEvent.Select -> {
-                if (event.id == selectedId) return
+                if (event.id == selectedId || state.value.actionBusy) return
                 selectedId = event.id
                 viewModelScope.launch { synchronize() }
             }
             is EditorEvent.Edit -> edit(event.project)
-            is EditorEvent.ImportHtml -> state.value.draft?.let { edit(it.copy(html = event.html)) }
+            is EditorEvent.ImportHtml -> {
+                state.value.draft?.let { edit(it.copy(html = event.html)) }
+                mutableState.value =
+                    mutableState.value.copy(importGeneration = state.value.importGeneration + 1)
+            }
+            is EditorEvent.ReportError -> {
+                mutableState.value = mutableState.value.copy(operationError = event.message)
+            }
             is EditorEvent.Preset ->
                 launchAction {
                     val draft = state.value.draft ?: return@launchAction
                     val next = withContext(Dispatchers.IO) { templates.apply(draft, event.name) }
-                    if (selectedId == next.id) preview(next)
+                    if (selectedId == next.id) {
+                        edit(next)
+                        preview(next)
+                    }
                 }
             is EditorEvent.Delete ->
                 launchAction {
@@ -83,13 +101,16 @@ class EditorViewModel(
                             }
                         }
                     selectedId = project.id
+                    sessions[project.id] = DraftSession(project, dirty = true)
                     synchronize()
                 }
             EditorEvent.Save -> launchAction { save() }
-            EditorEvent.Pin ->
+            EditorEvent.Pin -> launchAction { pinSelected() }
+            is EditorEvent.PinProject ->
                 launchAction {
-                    val project = if (state.value.dirty) save() else state.value.draft
-                    project?.let { effectChannel.send(EditorEffect.Pin(it)) }
+                    selectedId = event.id
+                    synchronize()
+                    pinSelected()
                 }
             EditorEvent.Preview -> state.value.draft?.let(::preview)
             EditorEvent.Refresh -> {
@@ -112,17 +133,18 @@ class EditorViewModel(
         val session = sessions.getOrPut(project.id) { DraftSession(project) }
         session.project = project
         session.dirty = true
+        mutableState.value = mutableState.value.copy(operationError = "")
         session.error = ""
         publishSession()
     }
 
     private fun preview(project: Project) {
-        edit(project)
         val session = sessions[project.id] ?: return
         previewJobs.remove(project.id)?.cancel()
         val generation = ++session.generation
         session.busy = true
         session.error = ""
+        mutableState.value = mutableState.value.copy(operationError = "")
         publishSession()
         previewJobs[project.id] =
             viewModelScope.launch {
@@ -132,10 +154,17 @@ class EditorViewModel(
                     val image = renderer.render(project, size, current)
                     if (
                         withContext(Dispatchers.IO) { repository.get(project.id) } != null &&
-                            session.project.html == project.html &&
                             session.generation == generation
                     ) {
-                        session.preview = Preview(project.html, current.dark, image)
+                        session.preview =
+                            Preview(
+                                project.html,
+                                current.dark,
+                                project.radius,
+                                current.locale,
+                                image,
+                                System.currentTimeMillis(),
+                            )
                     } else image.close()
                 } catch (cancelled: CancellationException) {
                     throw cancelled
@@ -149,6 +178,11 @@ class EditorViewModel(
             }
     }
 
+    private suspend fun pinSelected() {
+        val project = if (state.value.dirty) save() else state.value.draft
+        project?.let { effectChannel.send(EditorEffect.Pin(it)) }
+    }
+
     private suspend fun save(): Project? {
         val draft = state.value.draft ?: return null
         val saved = withContext(Dispatchers.IO) { saveProject(draft) }
@@ -156,7 +190,6 @@ class EditorViewModel(
             project = saved
             dirty = false
             error = ""
-            preview = null
         }
         synchronize()
         return saved
@@ -169,6 +202,7 @@ class EditorViewModel(
         previewJobs.keys.filter { it !in knownIds }.forEach { previewJobs.remove(it)?.cancel() }
         sessions.keys.retainAll(knownIds)
         images.keys.retainAll(knownIds)
+        frameSources.keys.retainAll(knownIds)
         if (projects.none { it.id == selectedId }) selectedId = projects.firstOrNull()?.id
         projects.forEach { saved ->
             sessions
@@ -192,16 +226,31 @@ class EditorViewModel(
             }
         if (id != selectedId) return
         images[id] = frame.file to image
+        projects
+            .firstOrNull { it.id == id && it.revision == frame.revision }
+            ?.let { frameSources[id] = frame.file to it }
         mutableState.value = mutableState.value.copy(selectedId = id, frame = frame)
         publishSession()
     }
 
     private fun publishSession() {
         val session = sessions[selectedId] ?: return
-        val dark = environment.current(session.project).dark
-        val preview =
-            session.preview?.takeIf {
-                it.html == session.project.html && it.dark == dark && session.dirty
+        val current = environment.current(session.project)
+        val dark = current.dark
+        val preview = session.preview?.takeIf { it.time >= state.value.frame.success }
+        val saved = frameSources[selectedId]?.takeIf { it.first == state.value.frame.file }?.second
+        val matches =
+            if (preview != null) {
+                preview.html == session.project.html &&
+                    preview.dark == dark &&
+                    preview.radius == session.project.radius &&
+                    preview.locale == current.locale
+            } else {
+                saved != null &&
+                    state.value.frame.success > 0 &&
+                    saved.html == session.project.html &&
+                    saved.radius == session.project.radius &&
+                    state.value.frame.dark == dark
             }
         mutableState.value =
             mutableState.value.copy(
@@ -211,6 +260,8 @@ class EditorViewModel(
                 dirty = session.dirty,
                 image = preview?.image ?: images[selectedId]?.second,
                 showDraft = preview != null,
+                previewTime = preview?.time ?: state.value.frame.success,
+                previewStale = !matches,
                 effectiveDark = dark,
                 previewBusy = session.busy,
                 previewError = session.error,
@@ -218,15 +269,20 @@ class EditorViewModel(
     }
 
     private fun launchAction(action: suspend () -> Unit) {
+        if (state.value.actionBusy) return
+        mutableState.value = mutableState.value.copy(actionBusy = true, operationError = "")
         viewModelScope.launch {
             try {
                 action()
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
-                effectChannel.send(
-                    EditorEffect.Message(error.message ?: error.javaClass.simpleName)
-                )
+                mutableState.value =
+                    mutableState.value.copy(
+                        operationError = error.message ?: error.javaClass.simpleName
+                    )
+            } finally {
+                mutableState.value = mutableState.value.copy(actionBusy = false)
             }
         }
     }

@@ -19,7 +19,7 @@ Examples include power outage schedules, weather, transit departures, service st
 ## What it does
 
 - Edit full HTML/CSS/JavaScript, start from a preset, or import/export an HTML file.
-- Preview a draft before publishing it to the same widget. Manage and delete independent projects.
+- Preview current code without saving. A single editor has collapsible code/settings, adjacent import/export controls and a swipe-open drawer for templates and references. Manage and delete independent projects.
 - Refresh manually or on a configurable background schedule. Keep the last successful frame when the network, JavaScript or rendering fails.
 - Restore saved projects, widget bindings and cached frames after reboot and unlock.
 - Follow the system theme or select light/dark per widget. Follow the system language: Ukrainian for `uk`, English otherwise.
@@ -31,8 +31,8 @@ Android 12+ is required. The application UI uses Jetpack Compose; home screen wi
 ## How to use it
 
 1. Create a project or choose a preset. Put your data fetching and drawing logic in the page.
-2. Use **Preview** to inspect the draft. **Save and build frame** publishes it to the project's existing widget.
-3. Set the appearance and update interval, then choose **Add to home screen**.
+2. Use the refresh icon on the preview to check your current code. **Save** applies it to the project's existing widget.
+3. Expand **Widget settings** for name, appearance and schedule. After saving, choose **Add to home screen**.
 4. Tap the frame to edit it, or ↻ to refresh without opening the editor.
 
 The page must call `await Kadr.ready()` when its content is ready, or `Kadr.fail(message)` on failure. It receives the effective theme, locale, viewport size, color tokens and native control-area dimensions. Reserve the bottom-right corner in HTML; Kadr does not inject padding or a footer strip.
@@ -88,7 +88,7 @@ Background updates use WorkManager. The minimum periodic interval is 15 minutes,
 
 ## Development
 
-[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [1.0.0 verification](specs/002-architecture-release/verification.md) · [Product specification](specs/001-programmable-widget/spec.md)
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [1.1.0 verification](specs/003-minimal-editor/verification.md) · [Product specification](specs/001-programmable-widget/spec.md)
 
 Bundled Vue is distributed under its [MIT license](app/src/main/assets/VUE-LICENSE.txt).
 

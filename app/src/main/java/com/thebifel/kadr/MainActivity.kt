@@ -4,7 +4,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -65,11 +64,14 @@ class MainActivity : LocalizedActivity() {
             if (uri != null)
                 lifecycleScope.launch {
                     runCatching { withContext(Dispatchers.IO) { documents.read(uri) } }
-                        .onSuccess {
-                            model.onEvent(EditorEvent.ImportHtml(it))
-                            message(getString(R.string.html_imported))
+                        .onSuccess { model.onEvent(EditorEvent.ImportHtml(it)) }
+                        .onFailure {
+                            model.onEvent(
+                                EditorEvent.ReportError(
+                                    it.message ?: getString(R.string.file_failed)
+                                )
+                            )
                         }
-                        .onFailure { message(it.message ?: getString(R.string.file_failed)) }
                 }
         }
     private val saveFile =
@@ -77,8 +79,9 @@ class MainActivity : LocalizedActivity() {
             if (uri != null)
                 lifecycleScope.launch {
                     runCatching { withContext(Dispatchers.IO) { documents.write(uri, exportHtml) } }
-                        .onSuccess { message(getString(R.string.html_saved)) }
-                        .onFailure { message(getString(R.string.write_failed)) }
+                        .onFailure {
+                            model.onEvent(EditorEvent.ReportError(getString(R.string.write_failed)))
+                        }
                 }
         }
 
@@ -105,10 +108,13 @@ class MainActivity : LocalizedActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 model.effects.collect { effect ->
                     when (effect) {
-                        is EditorEffect.Message -> message(effect.text)
+                        is EditorEffect.Message ->
+                            model.onEvent(EditorEvent.ReportError(effect.text))
                         is EditorEffect.Pin ->
                             if (!WidgetPinRequester(this@MainActivity).request(effect.project))
-                                message(getString(R.string.pin_fallback))
+                                model.onEvent(
+                                    EditorEvent.ReportError(getString(R.string.pin_fallback))
+                                )
                     }
                 }
             }
@@ -137,6 +143,7 @@ class MainActivity : LocalizedActivity() {
                         copyAi = { copy(services.content.aiInstructions(), true) },
                         copyContract = { copy(services.content.contract(), false) },
                         contractText = services.content.contract(),
+                        aiText = services.content.aiInstructions(),
                     ),
                 )
             }
@@ -149,13 +156,10 @@ class MainActivity : LocalizedActivity() {
         incomingProject = intent.getStringExtra("project")
     }
 
-    private fun message(text: String) = Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
-
     private fun copy(text: String, ai: Boolean) {
         getSystemService(ClipboardManager::class.java)
             .setPrimaryClip(
                 ClipData.newPlainText(if (ai) "Kadr AI instructions" else "Kadr SDK contract", text)
             )
-        message(getString(if (ai) R.string.ai_copied else R.string.contract_copied))
     }
 }

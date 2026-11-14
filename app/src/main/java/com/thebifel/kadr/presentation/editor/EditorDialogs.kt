@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.thebifel.kadr.R
 import com.thebifel.kadr.domain.model.*
 import com.thebifel.kadr.presentation.theme.*
@@ -55,6 +54,17 @@ internal fun EditorDialogs(
                                         modifier = Modifier.fillMaxWidth(),
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
+                                        onEvent(EditorEvent.PinProject(p.id))
+                                        onDialog("")
+                                    }
+                                ) {
+                                    EditorIcon(
+                                        R.drawable.ic_add,
+                                        S(R.string.add_project_home, p.name),
                                     )
                                 }
                                 IconButton(
@@ -128,51 +138,5 @@ internal fun EditorDialogs(
                     },
                 )
             }
-        "presets" ->
-            AlertDialog(
-                onDismissRequest = { onDialog("") },
-                title = { Text(S(R.string.preset_title)) },
-                text = {
-                    Column {
-                        Text(S(R.string.preset_hint), fontSize = 12.sp, color = Muted)
-                        listOf(
-                                R.string.preset_power to "power",
-                                R.string.preset_weather to "weather",
-                                R.string.preset_blank to "blank",
-                            )
-                            .forEach { (name, kind) ->
-                                TextButton(
-                                    onClick = {
-                                        onDialog("")
-                                        onEvent(EditorEvent.Preset(kind))
-                                    }
-                                ) {
-                                    Text(S(name))
-                                }
-                            }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { onDialog("") }) { Text(S(R.string.close)) }
-                },
-            )
-        "contract" ->
-            AlertDialog(
-                onDismissRequest = { onDialog("") },
-                title = { Text(S(R.string.contract_title)) },
-                text = {
-                    Column(Modifier.heightIn(max = 380.dp).verticalScroll(rememberScrollState())) {
-                        Text(platform.contractText, fontSize = 12.sp, lineHeight = 19.sp)
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { platform.copyContract() }) {
-                        Text(S(R.string.copy_contract))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { onDialog("") }) { Text(S(R.string.close)) }
-                },
-            )
     }
 }

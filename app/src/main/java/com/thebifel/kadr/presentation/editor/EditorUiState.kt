@@ -17,6 +17,11 @@ data class EditorUiState(
     val effectiveDark: Boolean = false,
     val previewBusy: Boolean = false,
     val previewError: String = "",
+    val previewTime: Long = 0,
+    val previewStale: Boolean = false,
+    val actionBusy: Boolean = false,
+    val operationError: String = "",
+    val importGeneration: Int = 0,
 )
 
 sealed interface EditorEvent {
@@ -30,6 +35,8 @@ sealed interface EditorEvent {
 
     data class Delete(val id: String) : EditorEvent
 
+    data class ReportError(val message: String) : EditorEvent
+
     data object Create : EditorEvent
 
     data object Save : EditorEvent
@@ -39,6 +46,8 @@ sealed interface EditorEvent {
     data object Refresh : EditorEvent
 
     data object Pin : EditorEvent
+
+    data class PinProject(val id: String) : EditorEvent
 
     data object EnvironmentChanged : EditorEvent
 }

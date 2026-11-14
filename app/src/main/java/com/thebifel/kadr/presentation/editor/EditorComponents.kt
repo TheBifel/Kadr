@@ -63,3 +63,24 @@ internal fun ToggleRow(
         Switch(checked = checked, onCheckedChange = onChange)
     }
 }
+
+@Composable
+internal fun EditorIcon(
+    resource: Int,
+    description: String?,
+    modifier: androidx.compose.ui.Modifier = androidx.compose.ui.Modifier.size(20.dp),
+    tint: androidx.compose.ui.graphics.Color = Ink,
+) {
+    Icon(androidx.compose.ui.res.painterResource(resource), description, modifier, tint = tint)
+}
+
+@Composable
+internal fun CompactToggle(title: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 48.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(title, Modifier.weight(1f), fontSize = 12.sp)
+        Switch(checked, onCheckedChange = onChange)
+    }
+}

@@ -99,4 +99,21 @@
 <string name="frame_save_failed">Could not save the frame state</string>
 <string name="draft_label">Draft</string>
 <string name="app_footer">Kadr / %1$s · HTML → STATIC FRAME</string>
+<string name="tools_menu">Templates and instructions</string>
+<string name="back_to_menu">Back to menu</string>
+<string name="widget_preview">Widget</string>
+<string name="widget_code">Widget code</string>
+<string name="widget_settings">Widget settings</string>
+<string name="edit_code">Edit</string>
+<string name="collapse_code">Collapse</string>
+<string name="import_action">Import</string>
+<string name="export_action">Export</string>
+<string name="save_action">Save</string>
+<string name="templates">Templates</string>
+<string name="ai_instructions">AI instructions</string>
+<string name="code_reference">Code reference</string>
+<string name="refresh_preview">Refresh preview</string>
+<string name="preview_stale">Preview not updated</string>
+<string name="error_details">Update failed. Show details</string>
+<string name="add_project_home">Add %1$s to home screen</string>
 </resources>

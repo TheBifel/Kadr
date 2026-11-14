@@ -99,4 +99,21 @@
 <string name="frame_save_failed">Не вдалося зберегти стан кадру</string>
 <string name="draft_label">Чернетка</string>
 <string name="app_footer">Kadr / %1$s · HTML → СТАТИЧНИЙ КАДР</string>
+<string name="tools_menu">Шаблони та інструкції</string>
+<string name="back_to_menu">До меню</string>
+<string name="widget_preview">Віджет</string>
+<string name="widget_code">Код віджета</string>
+<string name="widget_settings">Налаштування віджета</string>
+<string name="edit_code">Редагувати</string>
+<string name="collapse_code">Згорнути</string>
+<string name="import_action">Імпорт</string>
+<string name="export_action">Експорт</string>
+<string name="save_action">Зберегти</string>
+<string name="templates">Шаблони</string>
+<string name="ai_instructions">Інструкції для ШІ</string>
+<string name="code_reference">Довідка для коду</string>
+<string name="refresh_preview">Оновити прев’ю</string>
+<string name="preview_stale">Прев’ю не оновлено</string>
+<string name="error_details">Помилка оновлення. Показати деталі</string>
+<string name="add_project_home">Додати %1$s на домашній екран</string>
 </resources>

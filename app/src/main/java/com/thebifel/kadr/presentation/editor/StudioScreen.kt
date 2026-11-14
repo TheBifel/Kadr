@@ -1,22 +1,26 @@
 package com.thebifel.kadr.presentation.editor
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.thebifel.kadr.BuildConfig
 import com.thebifel.kadr.R
-import com.thebifel.kadr.domain.model.*
+import com.thebifel.kadr.domain.model.Project
 import com.thebifel.kadr.presentation.theme.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun StudioScreen(
@@ -24,191 +28,152 @@ fun StudioScreen(
     onEvent: (EditorEvent) -> Unit,
     platform: EditorPlatformActions,
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val draft = state.draft
-    if (draft == null) {
-        Surface(Modifier.fillMaxSize(), color = Bg) {
-            Column(
-                Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-            ) {
-                Text("▦ Kadr", color = Accent, fontSize = 27.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.weight(1f))
-                if (state.loading) CircularProgressIndicator()
-                else Text(S(R.string.no_widgets), fontSize = 26.sp)
-                Button(
-                    onClick = { onEvent(EditorEvent.Create) },
-                    enabled = !state.loading,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(S(R.string.new_widget))
-                }
-                Spacer(Modifier.weight(1f))
-            }
-        }
-        return
-    }
-    val selected = state.selectedId
-    val frame = state.frame
-    val dirty = state.dirty
-    val previewBusy = state.previewBusy
-    val previewError = state.previewError
-    val waiting = frame.pending > 0
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    val drawer = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    var drawerPage by rememberSaveable { mutableStateOf("menu") }
     var dialog by remember { mutableStateOf("") }
     var deleteTarget by remember { mutableStateOf<Project?>(null) }
-    var menu by remember { mutableStateOf(false) }
-    val scroll = rememberScrollState()
-    LaunchedEffect(selected) { tab = 0 }
-    Surface(Modifier.fillMaxSize(), color = Bg) {
-        Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 9.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    "▦ " + S(R.string.app_name),
-                    color = Accent,
-                    fontSize = 27.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-1).sp,
-                )
-                Spacer(Modifier.weight(1f))
-                TextButton(onClick = { dialog = "projects" }) {
-                    Text(S(R.string.my_widgets) + " ▾", fontSize = 12.sp)
-                }
-                Box {
-                    IconButton(onClick = { menu = true }) {
-                        Text("⋮", fontSize = 26.sp, color = Muted)
-                    }
-                    DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                        DropdownMenuItem(
-                            text = { Text(S(R.string.import_html)) },
-                            onClick = {
-                                menu = false
-                                platform.importHtml()
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(S(R.string.export_html)) },
-                            onClick = {
-                                menu = false
-                                platform.exportHtml(draft.html)
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(S(R.string.contract_title)) },
-                            onClick = {
-                                menu = false
-                                dialog = "contract"
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(S(R.string.copy_ai)) },
-                            onClick = {
-                                menu = false
-                                platform.copyAi()
-                            },
-                        )
-                    }
-                }
-            }
-            HorizontalDivider(color = Border)
-            Column(
-                Modifier.weight(1f).verticalScroll(scroll).padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(18.dp),
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Text(
-                        S(R.string.programmable_widget),
-                        fontSize = 10.sp,
-                        color = Muted,
-                        letterSpacing = 2.sp,
-                    )
-                    Text(
-                        draft.name,
-                        fontSize = 29.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = (-.8).sp,
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+    var codeOpen by rememberSaveable(state.selectedId) { mutableStateOf(false) }
+    var settingsOpen by rememberSaveable(state.selectedId) { mutableStateOf(false) }
+    val draft = state.draft
+    fun closeDrawer() {
+        scope.launch {
+            drawer.close()
+            drawerPage = "menu"
+        }
+    }
+    LaunchedEffect(state.importGeneration) { if (state.importGeneration > 0) codeOpen = true }
+    BackHandler(drawer.isOpen) { closeDrawer() }
+    Surface(color = Bg, modifier = Modifier.fillMaxSize()) {
+        ModalNavigationDrawer(
+            drawerState = drawer,
+            // Closed drawers open only from the edge, never while selecting or editing code.
+            gesturesEnabled = drawer.isOpen,
+            drawerContent = {
+                EditorDrawer(drawerPage, { drawerPage = it }, ::closeDrawer, onEvent, platform)
+            },
+        ) {
+            Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding()) {
+                Column(Modifier.fillMaxSize()) {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        IconButton(onClick = { scope.launch { drawer.open() } }) {
+                            EditorIcon(R.drawable.ic_menu, S(R.string.tools_menu))
+                        }
                         Text(
-                            "HTML  ·  CSS  ·  JavaScript",
-                            color = Accent,
-                            fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace,
+                            draft?.name ?: S(R.string.app_name),
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                         )
-                        Spacer(Modifier.weight(1f))
-                        Text(
-                            S(if (dirty) R.string.unsaved else R.string.saved),
-                            color = Muted,
-                            fontSize = 10.sp,
-                        )
+                        IconButton(onClick = { dialog = "projects" }) {
+                            EditorIcon(R.drawable.ic_grid, S(R.string.my_widgets))
+                        }
+                    }
+                    HorizontalDivider(color = Border.copy(alpha = .55f))
+                    if (draft == null) {
+                        Box(
+                            Modifier.weight(1f).fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (state.loading) CircularProgressIndicator()
+                            else Text(S(R.string.no_widgets), color = Muted)
+                        }
+                    } else {
+                        key(state.selectedId) {
+                            Column(
+                                Modifier.weight(1f)
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(20.dp),
+                                verticalArrangement = Arrangement.spacedBy(20.dp),
+                            ) {
+                                WidgetPreview(state, onEvent)
+                                HorizontalDivider(color = Border.copy(alpha = .5f))
+                                EditorCode(
+                                    draft,
+                                    codeOpen,
+                                    { codeOpen = !codeOpen },
+                                    onEvent,
+                                    platform,
+                                )
+                                HorizontalDivider(color = Border.copy(alpha = .5f))
+                                TextButton(
+                                    onClick = { settingsOpen = !settingsOpen },
+                                    contentPadding = PaddingValues(0.dp),
+                                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                                ) {
+                                    Text(
+                                        S(R.string.widget_settings),
+                                        modifier = Modifier.weight(1f),
+                                        color = Ink,
+                                    )
+                                    EditorIcon(
+                                        if (settingsOpen) R.drawable.ic_up else R.drawable.ic_down,
+                                        null,
+                                    )
+                                }
+                                if (settingsOpen) EditorSettings(draft, onEvent)
+                            }
+                        }
+                    }
+                    HorizontalDivider(color = Border.copy(alpha = .55f))
+                    val add = draft != null && !state.dirty && draft.id !in state.boundProjectIds
+                    Button(
+                        onClick = {
+                            onEvent(
+                                when {
+                                    draft == null -> EditorEvent.Create
+                                    add -> EditorEvent.Pin
+                                    else -> EditorEvent.Save
+                                }
+                            )
+                        },
+                        enabled =
+                            !state.loading &&
+                                !state.actionBusy &&
+                                (draft == null || state.dirty || add),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier =
+                            Modifier.fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 12.dp)
+                                .heightIn(min = 48.dp),
+                    ) {
+                        if (state.actionBusy)
+                            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        else
+                            Text(
+                                S(
+                                    when {
+                                        draft == null -> R.string.new_widget
+                                        add -> R.string.add_home
+                                        else -> R.string.save_action
+                                    }
+                                )
+                            )
                     }
                 }
-                WidgetPreview(state, onEvent)
-                when {
-                    previewBusy ->
-                        Text(S(R.string.building_preview), color = Accent, fontSize = 11.sp)
-                    previewError.isNotEmpty() ->
-                        Notice(S(R.string.preview_failed, previewError), true)
-                    waiting -> Text(S(R.string.queued), color = Accent, fontSize = 11.sp)
-                    frame.error.isNotEmpty() -> Notice(S(R.string.previous_kept, frame.error), true)
-                    frame.success > 0 ->
-                        Text("● " + S(R.string.frame_ready), fontSize = 11.sp, color = Muted)
-                }
-                TabRow(
-                    selectedTabIndex = tab,
-                    containerColor = Bg,
-                    contentColor = Accent,
-                    divider = { HorizontalDivider(color = Border) },
-                ) {
-                    listOf(R.string.content, R.string.appearance, R.string.updates)
-                        .forEachIndexed { i, id ->
-                            Tab(
-                                selected = tab == i,
-                                onClick = { tab = i },
-                                text = { Text(S(id), fontSize = 12.sp) },
-                                selectedContentColor = Accent,
-                                unselectedContentColor = Muted,
+                Box(
+                    Modifier.align(Alignment.CenterStart)
+                        .height(200.dp)
+                        .width(16.dp)
+                        .systemGestureExclusion()
+                        .pointerInput(drawer) {
+                            var distance = 0f
+                            detectHorizontalDragGestures(
+                                onDragStart = { distance = 0f },
+                                onHorizontalDrag = { change, amount ->
+                                    change.consume()
+                                    distance += amount
+                                },
+                                onDragEnd = {
+                                    if (distance > 40.dp.toPx()) scope.launch { drawer.open() }
+                                },
                             )
                         }
-                }
-                EditorSettings(tab, draft, onEvent, platform, onPresets = { dialog = "presets" })
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    OutlinedButton(
-                        onClick = { onEvent(EditorEvent.Preview) },
-                        enabled = !previewBusy,
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.height(50.dp),
-                    ) {
-                        Text(S(R.string.preview_action), fontSize = 12.sp)
-                    }
-                    Button(
-                        onClick = { onEvent(EditorEvent.Save) },
-                        modifier = Modifier.weight(1f).heightIn(min = 50.dp),
-                        shape = RoundedCornerShape(10.dp),
-                    ) {
-                        Text(
-                            S(R.string.save_build),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                }
-                OutlinedButton(
-                    onClick = { onEvent(EditorEvent.Pin) },
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    shape = RoundedCornerShape(10.dp),
-                ) {
-                    Text(S(R.string.add_home), fontSize = 12.sp)
-                }
-                Text(
-                    S(R.string.app_footer, BuildConfig.VERSION_NAME),
-                    color = Muted,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 9.sp,
-                    modifier = Modifier.padding(vertical = 6.dp),
                 )
             }
         }
@@ -219,7 +184,7 @@ fun StudioScreen(
         state,
         onEvent,
         platform,
-        onDialog = { dialog = it },
-        onDeleteTarget = { deleteTarget = it },
+        { dialog = it },
+        { deleteTarget = it },
     )
 }

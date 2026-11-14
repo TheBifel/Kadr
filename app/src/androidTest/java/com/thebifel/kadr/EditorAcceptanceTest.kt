@@ -159,7 +159,7 @@ class EditorAcceptanceTest {
         val c = LocaleSupport.localized(context)
         try {
             instrumentation.waitForIdleSync()
-            click(c.getString(R.string.my_widgets) + " ▾", scroll = false)
+            click(c.getString(R.string.my_widgets), scroll = false)
             click(c.getString(R.string.delete_widget_name, p.name))
             click(c.getString(R.string.cancel), scroll = false)
             assertNotNull(repo.get(p.id))
@@ -226,8 +226,8 @@ class EditorAcceptanceTest {
         val c = LocaleSupport.localized(context)
         try {
             instrumentation.waitForIdleSync()
-            click(c.getString(R.string.content), scroll = false)
-            click(c.getString(R.string.choose_template))
+            click(c.getString(R.string.tools_menu), scroll = false)
+            click(c.getString(R.string.templates), scroll = false)
             click(c.getString(R.string.preset_blank), scroll = false)
             repeat(4) {
                 nodes()
@@ -240,10 +240,16 @@ class EditorAcceptanceTest {
                     ?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
                 Thread.sleep(200)
             }
-            waitUntil { nodes().any { it.text?.toString() == c.getString(R.string.draft_preview) } }
+            waitUntil {
+                nodes().any {
+                    it.contentDescription?.toString() == c.getString(R.string.refresh_preview)
+                }
+            }
+            Thread.sleep(1000)
+            assertFalse(nodes().any { it.text?.toString() == c.getString(R.string.draft_preview) })
             assertEquals(p.html, repo.get(p.id)!!.html)
             assertEquals(before, repo.result(p.id).success)
-            click(c.getString(R.string.save_build))
+            click(c.getString(R.string.save_action))
             waitUntil {
                 repo.result(p.id).success > before &&
                     repo.result(p.id).revision == repo.get(p.id)!!.revision
@@ -251,8 +257,8 @@ class EditorAcceptanceTest {
             assertEquals(p.id, repo.binding(90010))
             assertEquals(count, repo.all().size)
             assertNotEquals(p.html, repo.get(p.id)!!.html)
-            click("⋮", scroll = false)
-            click(c.getString(R.string.contract_title), scroll = false)
+            click(c.getString(R.string.tools_menu), scroll = false)
+            click(c.getString(R.string.code_reference), scroll = false)
             click(c.getString(R.string.copy_contract), scroll = false)
             val clipboard = context.getSystemService(ClipboardManager::class.java)
             waitUntil {
@@ -263,7 +269,8 @@ class EditorAcceptanceTest {
                 clipboard.primaryClip!!.getItemAt(0).text.toString(),
             )
             click(c.getString(R.string.close), scroll = false)
-            click("⋮", scroll = false)
+            click(c.getString(R.string.tools_menu), scroll = false)
+            click(c.getString(R.string.ai_instructions), scroll = false)
             click(c.getString(R.string.copy_ai), scroll = false)
             waitUntil {
                 clipboard.primaryClip?.getItemAt(0)?.text?.toString() ==
