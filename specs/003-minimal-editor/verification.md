@@ -12,8 +12,10 @@ Preview refresh now has its own successful timestamp and does not mark an unchan
 
 - `build-final.log` and `build-gesture.log`: formatting, debug APK/test APK and Android lint passed. **16 JVM domain tests** passed / remained up to date with unchanged domain sources.
 - `instrumentation.log`: **19 Android tests passed**, 48.03s. Includes real WebView/Vue/Canvas/fetch, failure cache retention, scheduling, persistence/remapping, theme/locale, deletion isolation, actual editor preset/save/clipboard actions and three new preview-state regressions.
-- The three new regressions cover unchanged preview without publishing, delayed preview versus newer edits and failure retention, and rename/schedule-only save versus visual changes.
-- Final gesture-adjusted APK: **19/19 Android tests passed**, 53.456s (`instrumentation-final.log`).
+- The preview regressions cover unchanged preview without publishing, delayed preview versus newer edits and failure retention, and rename/schedule-only save versus visual changes. A fourth test verifies that an incoming widget-project selection during Save is deferred and delivered afterward, rather than dropped.
+- Gesture-adjusted build: **19/19 Android tests passed**, 53.456s (`instrumentation-final.log`). Final release build adds the project-navigation regression: **20/20 Android tests passed**, 57.528s (`instrumentation-release.log`); formatting and lint also passed in `build-routing.log`.
+
+- [GitHub CI](https://github.com/TheBifel/Kadr/actions/runs/43610688513) passed for source commit `96d5e7253d1165a032cb736b83f5e675cc255229`: clean hosted runner, formatting, JVM tests, APK/test APK, lint and artifact upload.
 
 ## Upgrade and device flows
 
@@ -26,7 +28,7 @@ Preview refresh now has its own successful timestamp and does not mark an unchan
 ## Package and publication
 
 - Gitleaks 8.30.1: zero findings in the public source candidate and extracted APK assets/DEX strings (`secrets-source.json`, `secrets-apk.json`). No credentials, private signing keys, emulator state or local reports are distributed.
-- Debug APK SHA-256: `c0aee683fe647f6f23376fe6f94e489e2952f2437bce6b31b3dc0ac046e3a625`.
+- Debug APK SHA-256: `05fb824e479a2885b9b40dc172218e708d7f46cc962efe391801e2188dcf00fb`.
 - Release assets: `Kadr-1.1.0-debug.apk`, `SHA256SUMS`, `LICENSE`, `NOTICE`. Publication and anonymous download verification are recorded after the release is created.
 
 ## Limits
