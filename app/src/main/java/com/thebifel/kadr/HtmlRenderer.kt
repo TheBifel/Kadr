@@ -34,13 +34,15 @@ class HtmlRenderer(private val context: Context, private val resourceLoader: ((U
     suspend fun render(project: Project, widthDp: Int=320, heightDp: Int=160, timeoutMs: Long=15_000): Bitmap = withContext(Dispatchers.Main) {
         suspendCancellableCoroutine { continuation ->
             val handler=Handler(Looper.getMainLooper())
+            val localized=LocaleSupport.localized(context)
+            val dark=project.isDark(context)
             val (width,height)=Policy.renderSize(widthDp,heightDp)
             val web=WebView(context)
             val sink=ImageReader.newInstance(width,height,PixelFormat.RGBA_8888,2)
             sink.setOnImageAvailableListener({ reader -> runCatching { reader.acquireLatestImage()?.close() } },handler)
             val displayManager=context.getSystemService(DisplayManager::class.java)
             val display=displayManager.createVirtualDisplay("Kadr render",width,height,context.resources.displayMetrics.densityDpi,sink.surface,DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY or DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION)
-            requireNotNull(display) { "Не вдалося створити дисплей кадру" }
+            requireNotNull(display) { localized.getString(R.string.render_display_failed) }
             val presentation=Presentation(context,display.display,android.R.style.Theme_Material_NoActionBar_Fullscreen)
             presentation.window?.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
             presentation.setContentView(web,ViewGroup.LayoutParams(width,height))
@@ -54,7 +56,7 @@ class HtmlRenderer(private val context: Context, private val resourceLoader: ((U
             var ended=false
             var readyRequested=false
             val timeout=Runnable {
-                if(!ended) { ended=true; close();continuation.resumeWithException(IllegalStateException("Сторінка не викликала Kadr.ready() за ${timeoutMs/1000} с")) }
+                if(!ended) { ended=true; close();continuation.resumeWithException(IllegalStateException(localized.getString(R.string.render_timeout,timeoutMs/1000))) }
             }
             fun finish(error: String?=null) {
                 if(ended)return
@@ -62,9 +64,9 @@ class HtmlRenderer(private val context: Context, private val resourceLoader: ((U
                 try {
                     if(error!=null) continuation.resumeWithException(IllegalStateException(error.take(180)))
                     else {
-                        check(web.width==width && web.height==height) { "Розмір кадру ще не встановлено: ${web.width}×${web.height}" }
+                        check(web.width==width && web.height==height) { localized.getString(R.string.render_size_failed) }
                         val bitmap=Bitmap.createBitmap(width,height,Bitmap.Config.ARGB_8888)
-                        val canvas=Canvas(bitmap);canvas.drawColor(Color.parseColor(if(project.dark)"#222B1B" else "#F2F4E9"));web.draw(canvas)
+                        val canvas=Canvas(bitmap);canvas.drawColor(Color.parseColor(if(dark)"#222B1B" else "#F2F4E9"));web.draw(canvas)
                         continuation.resume(bitmap)
                     }
                 } catch(e: Throwable) { if(continuation.isActive)continuation.resumeWithException(e) }
@@ -100,7 +102,7 @@ class HtmlRenderer(private val context: Context, private val resourceLoader: ((U
                     return null
                 }
                 override fun onReceivedError(view: WebView, request: WebResourceRequest, error: android.webkit.WebResourceError) {
-                    if(request.isForMainFrame)handler.post { finish("Не вдалося завантажити сторінку") }
+                    if(request.isForMainFrame)handler.post { finish(localized.getString(R.string.page_load_failed)) }
                 }
             }
             web.addJavascriptInterface(object {
@@ -115,18 +117,18 @@ class HtmlRenderer(private val context: Context, private val resourceLoader: ((U
                 } }
                 @JavascriptInterface fun fail(message: String) { handler.post { finish(message) } }
             },"__KadrSignal")
-            val bg=if(project.dark)"#222b1b" else "#f2f4e9"
-            val fg=if(project.dark)"#edf4dd" else "#29351e"
-            val muted=if(project.dark)"#b8c9a4" else "#69765b"
-            val accent=if(project.dark)"#c8ed7e" else "#a6c566"
+            val bg=if(dark)"#222b1b" else "#f2f4e9"
+            val fg=if(dark)"#edf4dd" else "#29351e"
+            val muted=if(dark)"#b8c9a4" else "#69765b"
+            val accent=if(dark)"#c8ed7e" else "#a6c566"
             val inject="""
                 <meta name="viewport" content="width=$widthDp, initial-scale=1, maximum-scale=1">
-                <style>:root{--kadr-bg:$bg;--kadr-fg:$fg;--kadr-muted:$muted;--kadr-accent:$accent;color-scheme:${if(project.dark)"dark" else "light"}}html,body{margin:0;overflow:hidden;background:var(--kadr-bg);color:var(--kadr-fg)}*{animation:none!important;transition:none!important;box-sizing:border-box}::-webkit-scrollbar{display:none}</style>
+                <style>:root{--kadr-bg:$bg;--kadr-fg:$fg;--kadr-muted:$muted;--kadr-accent:$accent;color-scheme:${if(dark)"dark" else "light"}}html,body{margin:0;overflow:hidden;background:var(--kadr-bg);color:var(--kadr-fg)}*{animation:none!important;transition:none!important;box-sizing:border-box}::-webkit-scrollbar{display:none}</style>
                 <script>
-                window.Kadr=Object.freeze({theme:'${if(project.dark)"dark" else "light"}',width:$widthDp,height:$heightDp,
-                    ready:async function(){try{await document.fonts.ready;await Promise.all(Array.from(document.images).map(i=>i.decode()));__KadrSignal.ready();}catch(e){__KadrSignal.fail('Ресурс кадру: '+e.message);}},
+                window.Kadr=Object.freeze({locale:'${LocaleSupport.language(context)}',theme:'${if(dark)"dark" else "light"}',width:$widthDp,height:$heightDp,
+                    ready:async function(){try{await document.fonts.ready;await Promise.all(Array.from(document.images).map(i=>i.decode()));__KadrSignal.ready();}catch(e){__KadrSignal.fail(${org.json.JSONObject.quote(localized.getString(R.string.render_resource_failed))}+e.message);}},
                     fail:function(message){__KadrSignal.fail(String(message));}});
-                window.addEventListener('error',e=>Kadr.fail(e.message||'Помилка JavaScript'));
+                window.addEventListener('error',e=>Kadr.fail(e.message||${org.json.JSONObject.quote(localized.getString(R.string.js_failed))}));
                 window.addEventListener('unhandledrejection',e=>Kadr.fail(e.reason?.message||String(e.reason)));
                 </script>
             """.trimIndent()

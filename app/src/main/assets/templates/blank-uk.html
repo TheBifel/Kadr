@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="uk"><head><meta name="kadr-network" content="none"><meta charset="utf-8">
+<style>
+body { font-family:system-ui; padding:24px; }
+h1 { font-size:30px; margin:0 0 12px; letter-spacing:-1px; }
+p { color:var(--kadr-muted); font-size:13px; }
+</style></head><body>
+<h1>Мій кадр ↗</h1>
+<p id="message"></p>
+<script>
+// Тут можуть бути fetch, обчислення, SVG або Canvas.
+document.querySelector('#message').textContent =
+  'Побудовано о '+new Date().toLocaleTimeString('uk-UA');
+Kadr.ready();
+</script></body></html>

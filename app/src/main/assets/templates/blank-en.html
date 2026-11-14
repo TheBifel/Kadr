@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta name="kadr-network" content="none"><meta charset="utf-8">
+<style>
+body { font-family:system-ui; padding:24px; }
+h1 { font-size:30px; margin:0 0 12px; letter-spacing:-1px; }
+p { color:var(--kadr-muted); font-size:13px; }
+</style></head><body>
+<h1>My tile ↗</h1>
+<p id="message"></p>
+<script>
+// Use fetch, calculations, SVG or Canvas here.
+document.querySelector('#message').textContent =
+  'Built at '+new Date().toLocaleTimeString('en-GB');
+Kadr.ready();
+</script></body></html>
