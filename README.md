@@ -1,5 +1,7 @@
 # Kadr
 
+[![Android](https://github.com/TheBifel/Kadr/actions/workflows/android.yml/badge.svg)](https://github.com/TheBifel/Kadr/actions/workflows/android.yml)
+
 **Your data. Your layout. One Android widget.**
 
 Kadr turns an HTML page with CSS and JavaScript into a home screen widget. The page fetches data, runs your logic and draws a composition. Kadr captures a static frame, closes the renderer and displays that frame until the next successful update.

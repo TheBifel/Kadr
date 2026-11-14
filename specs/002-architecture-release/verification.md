@@ -21,8 +21,10 @@ Date: 2026-11-14. Environment: JDK 17, Android SDK 36, API35 x86_64 emulator and
 - Final APK signature verifies and its certificate matches 0.1.4, supporting in-place updates. The private key stays outside Git. Optional external signing configuration is read from environment variables.
 - Final debug APK SHA-256: `0bd676a4cb563033f043399b3da4a1e923e93e513211d275339ca67dac79758c`.
 
+- [GitHub CI](https://github.com/TheBifel/Kadr/actions/runs/43601757704) passed on a clean hosted runner: explicit Android SDK setup, formatting, JVM tests, both APK builds, lint and artifact upload. Documentation-only changes do not rerun the Android build.
+
 ## Distribution and limits
 
-Public repository: [TheBifel/Kadr](https://github.com/TheBifel/Kadr). Release: [v1.0.0](https://github.com/TheBifel/Kadr/releases/tag/v1.0.0), with debug APK, checksum and license/NOTICE. Remote availability and download checksum are checked after publishing; that check is recorded in the release handoff.
+Public repository: [TheBifel/Kadr](https://github.com/TheBifel/Kadr). Release: [v1.0.0](https://github.com/TheBifel/Kadr/releases/tag/v1.0.0), with debug APK, checksum and license/NOTICE. The release is public and published. Its APK was downloaded anonymously from the GitHub release URL and verified with the attached `SHA256SUMS`: identical to the tested local APK. A copy in the local distribution share was also verified against the same checksum.
 
 Physical devices/OEM battery restrictions, long-duration power use, Direct Boot and a cross-device cloud restore were not verified. The release is a debug build, not a Play Store package. The original product verification remains in [001](../001-programmable-widget/verification.md).

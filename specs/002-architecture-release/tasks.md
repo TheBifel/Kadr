@@ -9,4 +9,4 @@
 - [x] Apache 2.0, third-party notices and packaged license assets.
 - [x] Domain/instrumentation/lint/formatting and upgrade/native refresh/offline reboot checks.
 - [x] Source/history/APK secret checks and signing compatibility.
-- [ ] Public GitHub repository, CI and release download verification.
+- [x] Public GitHub repository, CI and release download verification.
