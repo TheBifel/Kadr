@@ -27,6 +27,7 @@ class EditorPreviewStateTest {
 
     private val fail = AtomicBoolean(false)
     private val gate = AtomicReference<CompletableDeferred<Unit>?>(null)
+    private val schedulingGate = AtomicReference<CompletableDeferred<Unit>?>(null)
 
     private fun waitUntil(condition: () -> Boolean) {
         val until = System.currentTimeMillis() + 15000
@@ -51,7 +52,9 @@ class EditorPreviewStateTest {
         cached.recycle()
         val scheduler =
             object : RefreshScheduler {
-                override fun configure(project: Project) {}
+                override fun configure(project: Project) {
+                    schedulingGate.get()?.let { runBlocking { it.await() } }
+                }
 
                 override fun enqueue(project: Project, replace: Boolean) {}
 
@@ -173,5 +176,28 @@ class EditorPreviewStateTest {
         assertEquals("Renamed", repo.get(p.id)!!.name)
         event(model, EditorEvent.Edit(model.state.value.draft!!.copy(radius = 16)))
         assertTrue(model.state.value.previewStale)
+    }
+
+    @Test
+    fun projectOpenedFromLauncherDuringSaveIsSelectedAfterTheSave() = withModel { model, p ->
+        val other = p.copy(id = "test-open-" + UUID.randomUUID(), name = "Other widget")
+        repo.save(other)
+        val pending = CompletableDeferred<Unit>()
+        schedulingGate.set(pending)
+        try {
+            event(model, EditorEvent.Edit(p.copy(name = "Saving widget")))
+            event(model, EditorEvent.Save)
+            waitUntil { model.state.value.actionBusy }
+            event(model, EditorEvent.Select(other.id))
+            assertEquals(p.id, model.state.value.selectedId)
+            pending.complete(Unit)
+            waitUntil { !model.state.value.actionBusy && model.state.value.selectedId == other.id }
+            assertEquals(other.id, model.state.value.draft!!.id)
+            assertEquals("Saving widget", repo.get(p.id)!!.name)
+        } finally {
+            pending.complete(Unit)
+            schedulingGate.set(null)
+            repo.delete(other.id)
+        }
     }
 }

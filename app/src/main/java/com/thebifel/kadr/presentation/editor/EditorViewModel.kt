@@ -11,6 +11,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 
 /** Owns drafts and async operations; Compose only renders state and sends events. */
@@ -60,7 +61,14 @@ class EditorViewModel(
     fun onEvent(event: EditorEvent) {
         when (event) {
             is EditorEvent.Select -> {
-                if (event.id == selectedId || state.value.actionBusy) return
+                if (event.id == selectedId) return
+                if (state.value.actionBusy) {
+                    viewModelScope.launch {
+                        state.first { !it.actionBusy }
+                        onEvent(event)
+                    }
+                    return
+                }
                 selectedId = event.id
                 viewModelScope.launch { synchronize() }
             }
