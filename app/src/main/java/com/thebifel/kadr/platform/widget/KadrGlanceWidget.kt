@@ -12,12 +12,10 @@ import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
-import androidx.glance.LocalSize
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.*
 import androidx.glance.appwidget.action.actionSendBroadcast
 import androidx.glance.appwidget.action.actionStartActivity
-import androidx.glance.background
 import androidx.glance.layout.*
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
@@ -29,7 +27,6 @@ import com.thebifel.kadr.data.rendering.asBitmap
 import com.thebifel.kadr.di.appContainer
 import com.thebifel.kadr.domain.model.*
 import com.thebifel.kadr.platform.LocaleSupport
-import kotlin.math.roundToInt
 
 /** UI is Glance/Compose; HTML is already a persisted, inert bitmap. */
 class KadrGlanceWidget : GlanceAppWidget() {
@@ -57,16 +54,9 @@ class KadrGlanceWidget : GlanceAppWidget() {
                         0xFFB8C9A4
                     else 0xFF69765B
                 )
-            val bounds = LocalSize.current
-            val size =
-                RenderSize(
-                    bounds.width.value.roundToInt().coerceAtLeast(1),
-                    bounds.height.value.roundToInt().coerceAtLeast(1),
-                )
-            val radius = project?.radius ?: 24
-            val display =
-                remember(frame.file, project?.id, radius, size, bg) {
-                    WidgetFrameShape.render(bitmap, size, radius, bg.toArgb())
+            val surface =
+                remember(project?.radius, bg) {
+                    WidgetSurface.create(context, project?.radius ?: 24, bg.toArgb())
                 }
             val open =
                 if (project == null)
@@ -76,69 +66,67 @@ class KadrGlanceWidget : GlanceAppWidget() {
                     Intent(context, MainActivity::class.java)
                         .putExtra("project", project.id)
                         .setData(android.net.Uri.parse("kadr://edit/${project.id}"))
-            Box(
-                GlanceModifier.fillMaxSize()
-                    .background(Color.Transparent)
-                    // The image owns its rounded alpha; opt out of an additional host outline.
-                    .cornerRadius(0.dp)
-                    .appWidgetBackground(),
-                contentAlignment = Alignment.BottomEnd,
+            AndroidRemoteViews(
+                remoteViews = surface,
+                containerViewId = android.R.id.background,
+                modifier = GlanceModifier.fillMaxSize(),
             ) {
-                Image(
-                    ImageProvider(display),
+                Box(GlanceModifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
                     if (bitmap != null)
-                        localized.getString(
-                            R.string.frame_description,
-                            project?.name ?: "Kadr",
-                            WidgetPresentation.stamp(frame.success),
-                        )
-                    else null,
-                    GlanceModifier.fillMaxSize().clickable(actionStartActivity(open)),
-                    contentScale = ContentScale.FillBounds,
-                )
-                if (bitmap == null)
-                    Box(
-                        GlanceModifier.fillMaxSize().clickable(actionStartActivity(open)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            if (project == null) localized.getString(R.string.choose_page)
-                            else localized.getString(R.string.waiting_first),
-                            style = TextStyle(color = ColorProvider(muted), fontSize = 13.sp),
-                        )
-                    }
-                Row(
-                    GlanceModifier.width(WidgetPolicy.controlsWidth.dp)
-                        .height(WidgetPolicy.controlsHeight.dp)
-                        .padding(end = 8.dp, bottom = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        WidgetPresentation.overlayStamp(frame),
-                        GlanceModifier.defaultWeight(),
-                        style =
-                            TextStyle(
-                                color = ColorProvider(muted),
-                                fontSize = 10.sp,
-                                textAlign = TextAlign.End,
+                        Image(
+                            ImageProvider(bitmap),
+                            localized.getString(
+                                R.string.frame_description,
+                                project?.name ?: "Kadr",
+                                WidgetPresentation.stamp(frame.success),
                             ),
-                        maxLines = 1,
-                    )
-                    if (project != null) {
-                        val refresh =
-                            Intent(context, RefreshReceiver::class.java)
-                                .putExtra("project", project.id)
-                                .setData(android.net.Uri.parse("kadr://refresh/$widgetId"))
-                                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+                            GlanceModifier.fillMaxSize().clickable(actionStartActivity(open)),
+                            contentScale = ContentScale.Fit,
+                        )
+                    else
                         Box(
-                            GlanceModifier.size(48.dp).clickable(actionSendBroadcast(refresh)),
+                            GlanceModifier.fillMaxSize().clickable(actionStartActivity(open)),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Image(
-                                ImageProvider(R.drawable.ic_refresh),
-                                localized.getString(R.string.update_widget),
-                                GlanceModifier.size(20.dp),
+                            Text(
+                                if (project == null) localized.getString(R.string.choose_page)
+                                else localized.getString(R.string.waiting_first),
+                                style = TextStyle(color = ColorProvider(muted), fontSize = 13.sp),
                             )
+                        }
+                    Row(
+                        GlanceModifier.width(WidgetPolicy.controlsWidth.dp)
+                            .height(WidgetPolicy.controlsHeight.dp)
+                            .padding(end = 8.dp, bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            WidgetPresentation.overlayStamp(frame),
+                            GlanceModifier.defaultWeight(),
+                            style =
+                                TextStyle(
+                                    color = ColorProvider(muted),
+                                    fontSize = 10.sp,
+                                    textAlign = TextAlign.End,
+                                ),
+                            maxLines = 1,
+                        )
+                        if (project != null) {
+                            val refresh =
+                                Intent(context, RefreshReceiver::class.java)
+                                    .putExtra("project", project.id)
+                                    .setData(android.net.Uri.parse("kadr://refresh/$widgetId"))
+                                    .addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+                            Box(
+                                GlanceModifier.size(48.dp).clickable(actionSendBroadcast(refresh)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Image(
+                                    ImageProvider(R.drawable.ic_refresh),
+                                    localized.getString(R.string.update_widget),
+                                    GlanceModifier.size(20.dp),
+                                )
+                            }
                         }
                     }
                 }
