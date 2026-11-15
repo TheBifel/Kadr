@@ -166,7 +166,7 @@ class EditorPreviewStateTest {
         }
 
     @Test
-    fun renamingAndScheduleOnlySaveDoNotInvalidateThePicture() = withModel { model, p ->
+    fun renamingScheduleAndNativeCornerChangesDoNotInvalidateThePicture() = withModel { model, p ->
         assertFalse(model.state.value.previewStale)
         event(model, EditorEvent.Edit(p.copy(name = "Renamed", interval = 60)))
         assertFalse(model.state.value.previewStale)
@@ -174,8 +174,8 @@ class EditorPreviewStateTest {
         waitUntil { !model.state.value.actionBusy && !model.state.value.dirty }
         assertFalse(model.state.value.previewStale)
         assertEquals("Renamed", repo.get(p.id)!!.name)
-        event(model, EditorEvent.Edit(model.state.value.draft!!.copy(radius = 16)))
-        assertTrue(model.state.value.previewStale)
+        event(model, EditorEvent.Edit(model.state.value.draft!!.copy(radius = 17)))
+        assertFalse(model.state.value.previewStale)
     }
 
     @Test

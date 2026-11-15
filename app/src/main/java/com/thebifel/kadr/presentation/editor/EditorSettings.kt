@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.thebifel.kadr.R
 import com.thebifel.kadr.domain.model.*
 import com.thebifel.kadr.presentation.theme.*
+import kotlin.math.roundToInt
 
 @Composable
 internal fun EditorCode(
@@ -112,16 +114,26 @@ internal fun EditorSettings(draft: Project, onEvent: (EditorEvent) -> Unit) {
             )
         }
     }
-    Text(S(R.string.corners), fontSize = 12.sp, color = Muted)
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        listOf(0, 16, 24).forEach { radius ->
-            FilterChip(
-                selected = draft.radius == radius,
-                onClick = { edit(draft.copy(radius = radius)) },
-                label = { Text("$radius dp") },
-            )
-        }
+    val cornerLabel = S(R.string.corners)
+    val cornerValue = context.getString(R.string.corner_radius_value, draft.radius)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(cornerLabel, fontSize = 12.sp, color = Muted)
+        Text(cornerValue, fontSize = 12.sp, color = Ink)
     }
+    Slider(
+        value = draft.radius.toFloat(),
+        onValueChange = { value ->
+            val radius = value.roundToInt().coerceIn(0, WidgetPolicy.maxCornerRadiusDp)
+            if (radius != draft.radius) edit(draft.copy(radius = radius))
+        },
+        valueRange = 0f..WidgetPolicy.maxCornerRadiusDp.toFloat(),
+        steps = WidgetPolicy.maxCornerRadiusDp - 1,
+        modifier =
+            Modifier.fillMaxWidth().semantics {
+                contentDescription = cornerLabel
+                stateDescription = cornerValue
+            },
+    )
     Text(S(R.string.updates), fontSize = 12.sp, color = Muted)
     Column {
         WidgetPolicy.intervals.chunked(4).forEach { row ->

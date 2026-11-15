@@ -30,7 +30,6 @@ class EditorViewModel(
     private data class Preview(
         val html: String,
         val dark: Boolean,
-        val radius: Int,
         val locale: String,
         val image: FrameImage,
         val time: Long,
@@ -169,7 +168,6 @@ class EditorViewModel(
                             Preview(
                                 project.html,
                                 current.dark,
-                                project.radius,
                                 current.locale,
                                 image,
                                 System.currentTimeMillis(),
@@ -251,13 +249,11 @@ class EditorViewModel(
             if (preview != null) {
                 preview.html == session.project.html &&
                     preview.dark == dark &&
-                    preview.radius == session.project.radius &&
                     preview.locale == current.locale
             } else {
                 saved != null &&
                     state.value.frame.success > 0 &&
                     saved.html == session.project.html &&
-                    saved.radius == session.project.radius &&
                     state.value.frame.dark == dark
             }
         mutableState.value =

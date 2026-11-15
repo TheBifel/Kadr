@@ -40,7 +40,7 @@
 <string name="auto_theme">Auto</string>
 <string name="light_theme">Light</string>
 <string name="dark_theme">Dark</string>
-<string name="corners">Corner radius</string>
+<string name="corners">Widget corner radius</string>
 <string name="footer_hint">The timestamp and refresh button overlay the lower right corner. Leave space for them in your HTML.</string>
 <string name="updates_title">When should the frame refresh?</string>
 <string name="preferred_interval">Preferred interval</string>
@@ -117,4 +117,5 @@
 <string name="error_details">Update failed. Show details</string>
 <string name="add_project_home">Add %1$s to home screen</string>
 <string name="copy_error">Copy error</string>
+<string name="corner_radius_value">%1$d dp</string>
 </resources>

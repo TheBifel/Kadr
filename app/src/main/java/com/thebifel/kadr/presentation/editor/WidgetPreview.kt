@@ -43,17 +43,14 @@ internal fun WidgetPreview(
         }
         val cardBg = Color(if (state.effectiveDark) 0xFF222B1B else 0xFFF2F4E9)
         val cardMuted = Color(if (state.effectiveDark) 0xFFB8C9A4 else 0xFF69765B)
-        Box(
-            Modifier.fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .border(1.dp, Border.copy(alpha = .45f), RoundedCornerShape(16.dp))
-                .padding(12.dp, 18.dp)
-        ) {
+        val widgetShape = RoundedCornerShape(draft.radius.dp)
+        Box(Modifier.fillMaxWidth()) {
             Box(
                 Modifier.fillMaxWidth()
                     .aspectRatio(if (image != null) image.width.toFloat() / image.height else 2f)
-                    .clip(RoundedCornerShape(draft.radius.dp))
+                    .clip(widgetShape)
                     .background(cardBg)
+                    .border(1.dp, Border.copy(alpha = .45f), widgetShape)
             ) {
                 if (image != null)
                     Image(

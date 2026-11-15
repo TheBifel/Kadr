@@ -40,7 +40,7 @@
 <string name="auto_theme">Від системи</string>
 <string name="light_theme">Світла</string>
 <string name="dark_theme">Темна</string>
-<string name="corners">Заокруглення</string>
+<string name="corners">Радіус кутів віджета</string>
 <string name="footer_hint">Час і кнопка оновлення накладаються в нижньому правому кутку. Місце під них залишає HTML.</string>
 <string name="updates_title">Коли оновлювати кадр?</string>
 <string name="preferred_interval">Бажаний інтервал</string>
@@ -117,4 +117,5 @@
 <string name="error_details">Помилка оновлення. Показати деталі</string>
 <string name="add_project_home">Додати %1$s на домашній екран</string>
 <string name="copy_error">Копіювати помилку</string>
+<string name="corner_radius_value">%1$d dp</string>
 </resources>

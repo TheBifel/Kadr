@@ -5,6 +5,7 @@ object WidgetPolicy {
     const val controlsHeight = 56
     const val maxHtmlLength = 500_000
     const val maxNameLength = 80
+    const val maxCornerRadiusDp = 48
     val intervals = listOf(0, 15, 30, 60, 180, 360, 1440)
 
     private val localPage =
@@ -23,7 +24,7 @@ object WidgetPolicy {
         require(project.id.matches(Regex("[a-zA-Z0-9-]{1,64}")))
         require(project.name.length <= maxNameLength)
         require(project.html.length <= maxHtmlLength)
-        require(project.radius in listOf(0, 16, 24))
+        require(project.radius in 0..maxCornerRadiusDp)
         require(validInterval(project.interval))
         require(project.revision > 0)
     }

@@ -10,6 +10,8 @@ Available globals:
 • await Kadr.ready(): call once after all asynchronous work and DOM/Vue/Canvas updates are complete. Kadr waits for fonts and images before capturing.
 • Kadr.fail(messageOrError, details?): abort this update and retain the last successful frame. Pass the original Error and/or structured diagnostic details to preserve its stack and cause. Kadr adds viewport, layout and WebView context; the error can be copied from preview. Keep credentials out of diagnostic details.
 
+Widget corner radius is a native setting that clips the entire widget surface, including its cached image and native controls. It does not resize the HTML viewport or change the border radius of cards inside the page. Keep the page background full-bleed.
+
 CSS tokens: --kadr-bg, --kadr-fg, --kadr-muted, --kadr-accent.
 Use these for automatic light/dark appearance. Fit all content into the available size. Kadr supplies the viewport.
 
