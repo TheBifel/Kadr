@@ -23,7 +23,11 @@ import com.thebifel.kadr.platform.widget.WidgetPresentation
 import com.thebifel.kadr.presentation.theme.*
 
 @Composable
-internal fun WidgetPreview(state: EditorUiState, onEvent: (EditorEvent) -> Unit) {
+internal fun WidgetPreview(
+    state: EditorUiState,
+    onEvent: (EditorEvent) -> Unit,
+    onCopyError: (String) -> Unit,
+) {
     val image = state.image?.asBitmap()?.asImageBitmap()
     val draft = checkNotNull(state.draft)
     val busy = state.previewBusy
@@ -103,7 +107,14 @@ internal fun WidgetPreview(state: EditorUiState, onEvent: (EditorEvent) -> Unit)
             ) {
                 if (state.previewStale)
                     Text(S(R.string.preview_stale), color = Muted, fontSize = 11.sp)
-                if (error.isNotEmpty())
+                if (error.isNotEmpty()) {
+                    IconButton(onClick = { onCopyError(error) }) {
+                        EditorIcon(
+                            R.drawable.ic_copy,
+                            S(R.string.copy_error),
+                            tint = MaterialTheme.colorScheme.error,
+                        )
+                    }
                     IconButton(onClick = { details = !details }) {
                         EditorIcon(
                             R.drawable.ic_warning,
@@ -111,6 +122,7 @@ internal fun WidgetPreview(state: EditorUiState, onEvent: (EditorEvent) -> Unit)
                             tint = MaterialTheme.colorScheme.error,
                         )
                     }
+                }
             }
         if (details && error.isNotEmpty())
             Text(

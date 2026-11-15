@@ -1,5 +1,6 @@
 package com.thebifel.kadr.domain.usecase
 
+import com.thebifel.kadr.domain.model.FailureDetails
 import com.thebifel.kadr.domain.port.EnvironmentProvider
 import com.thebifel.kadr.domain.port.FrameRenderer
 import com.thebifel.kadr.domain.port.WidgetHost
@@ -45,7 +46,7 @@ class RefreshProject(
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (error: Exception) {
-                    val message = error.message ?: error.javaClass.simpleName
+                    val message = FailureDetails.from(error)
                     repository.fail(id, message, project.revision)
                     widgets.updateProject(id)
                     RefreshOutcome.Failed(message)

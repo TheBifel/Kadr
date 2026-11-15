@@ -20,6 +20,7 @@ Examples include power outage schedules, weather, transit departures, service st
 
 - Edit full HTML/CSS/JavaScript, start from a preset, or import/export an HTML file.
 - Preview current code without saving. A single editor has collapsible code/settings, adjacent import/export controls and a swipe-open drawer for templates and references. Manage and delete independent projects.
+- When preview fails, copy its detailed error (stack, viewport/layout and WebView context) with the error-only copy button, even with details collapsed.
 - Refresh manually or on a configurable background schedule. Keep the last successful frame when the network, JavaScript or rendering fails.
 - Restore saved projects, widget bindings and cached frames after reboot and unlock.
 - Follow the system theme or select light/dark per widget. Follow the system language: Ukrainian for `uk`, English otherwise.
@@ -88,7 +89,7 @@ Background updates use WorkManager. The minimum periodic interval is 15 minutes,
 
 ## Development
 
-[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [1.1.0 verification](specs/003-minimal-editor/verification.md) · [Product specification](specs/001-programmable-widget/spec.md)
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [1.1.1 patch notes](specs/003-minimal-editor/patch-1.1.1.md) · [Product specification](specs/001-programmable-widget/spec.md)
 
 Bundled Vue is distributed under its [MIT license](app/src/main/assets/VUE-LICENSE.txt).
 

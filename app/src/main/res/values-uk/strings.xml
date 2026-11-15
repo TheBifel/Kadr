@@ -116,4 +116,5 @@
 <string name="preview_stale">Прев’ю не оновлено</string>
 <string name="error_details">Помилка оновлення. Показати деталі</string>
 <string name="add_project_home">Додати %1$s на домашній екран</string>
+<string name="copy_error">Копіювати помилку</string>
 </resources>

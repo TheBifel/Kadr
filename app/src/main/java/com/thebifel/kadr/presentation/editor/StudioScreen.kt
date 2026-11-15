@@ -91,7 +91,7 @@ fun StudioScreen(
                                     .padding(20.dp),
                                 verticalArrangement = Arrangement.spacedBy(20.dp),
                             ) {
-                                WidgetPreview(state, onEvent)
+                                WidgetPreview(state, onEvent, platform.copyError)
                                 HorizontalDivider(color = Border.copy(alpha = .5f))
                                 EditorCode(
                                     draft,

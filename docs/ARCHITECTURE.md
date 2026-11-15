@@ -45,7 +45,7 @@ sequenceDiagram
     VM-->>UI: Updated state
 ```
 
-The ViewModel owns independent drafts, dirty flags, preview jobs and images. Composables render `EditorUiState` and send `EditorEvent`; they do not read preferences, write files or enqueue work. Activity results, clipboard and widget pinning are Android effects, outside Compose state. Drafts survive Activity recreation. Saved projects persist across process death; unsaved drafts are not stored in a large saved-instance-state Bundle.
+The ViewModel owns independent drafts, dirty flags, preview jobs and images. Composables render `EditorUiState` and send `EditorEvent`; they do not read preferences, write files or enqueue work. Activity results, clipboard and widget pinning are Android effects, outside Compose state. Preview error copying uses the same platform-action boundary. The renderer enriches failures with JavaScript call sites, geometry and recent WebView events; domain/persistence retain bounded detailed diagnostics (65,536 characters) without changing persisted field names. Drafts survive Activity recreation. Saved projects persist across process death; unsaved drafts are not stored in a large saved-instance-state Bundle.
 
 Storage work and image decoding run on IO; WebView operations run on the main looper because Android requires it. Cancellation stops and destroys an in-flight preview. New previews replace older requests; a late result cannot update a deleted or changed draft.
 

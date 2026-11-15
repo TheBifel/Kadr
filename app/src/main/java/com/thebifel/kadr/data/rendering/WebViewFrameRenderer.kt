@@ -16,7 +16,9 @@ import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -102,6 +104,29 @@ class WebViewFrameRenderer(
                     sink.setOnImageAvailableListener(null, null)
                     sink.close()
                 }
+                val events = ArrayDeque<String>()
+                fun note(message: String) {
+                    if (events.size == 24) events.removeFirst()
+                    events.addLast(FailureDetails.limit(message))
+                }
+                fun diagnostic(message: String): String =
+                    FailureDetails.limit(
+                        message +
+                            "\n\nRenderer: CSS " +
+                            widthDp +
+                            "×" +
+                            heightDp +
+                            "; bitmap " +
+                            width +
+                            "×" +
+                            height +
+                            "; theme=" +
+                            dark +
+                            "; locale=" +
+                            environment.locale +
+                            (if (events.isEmpty()) ""
+                            else "\n\nWebView events:\n" + events.joinToString("\n"))
+                    )
                 var ended = false
                 var readyRequested = false
                 val timeout = Runnable {
@@ -110,7 +135,9 @@ class WebViewFrameRenderer(
                         close()
                         continuation.resumeWithException(
                             IllegalStateException(
-                                localized.getString(R.string.render_timeout, timeoutMs / 1000)
+                                diagnostic(
+                                    localized.getString(R.string.render_timeout, timeoutMs / 1000)
+                                )
                             )
                         )
                     }
@@ -121,7 +148,9 @@ class WebViewFrameRenderer(
                     handler.removeCallbacks(timeout)
                     try {
                         if (error != null)
-                            continuation.resumeWithException(IllegalStateException(error.take(180)))
+                            continuation.resumeWithException(
+                                IllegalStateException(diagnostic(error))
+                            )
                         else {
                             check(web.width == width && web.height == height) {
                                 localized.getString(R.string.render_size_failed)
@@ -156,6 +185,31 @@ class WebViewFrameRenderer(
                 web.isVerticalScrollBarEnabled = false
                 web.isHorizontalScrollBarEnabled = false
                 web.setInitialScale((width.toFloat() / widthDp.coerceAtLeast(140) * 100).toInt())
+                web.webChromeClient =
+                    object : WebChromeClient() {
+                        override fun onConsoleMessage(message: ConsoleMessage): Boolean {
+                            if (
+                                message.messageLevel() == ConsoleMessage.MessageLevel.ERROR ||
+                                    message.messageLevel() == ConsoleMessage.MessageLevel.WARNING
+                            ) {
+                                note(
+                                    "Console " +
+                                        message.messageLevel() +
+                                        ": " +
+                                        message.message() +
+                                        " (" +
+                                        message
+                                            .sourceId()
+                                            .substringBefore('?')
+                                            .substringBefore('#') +
+                                        ":" +
+                                        message.lineNumber() +
+                                        ")"
+                                )
+                            }
+                            return true
+                        }
+                    }
                 web.webViewClient =
                     object : WebViewClient() {
                         override fun shouldOverrideUrlLoading(
@@ -207,10 +261,39 @@ class WebViewFrameRenderer(
                             request: WebResourceRequest,
                             error: android.webkit.WebResourceError,
                         ) {
+                            note(
+                                "Network " +
+                                    error.errorCode +
+                                    ": " +
+                                    error.description +
+                                    " [" +
+                                    request.method +
+                                    " " +
+                                    request.url.buildUpon().clearQuery().fragment(null).build() +
+                                    "]"
+                            )
                             if (request.isForMainFrame)
                                 handler.post {
                                     finish(localized.getString(R.string.page_load_failed))
                                 }
+                        }
+
+                        override fun onReceivedHttpError(
+                            view: WebView,
+                            request: WebResourceRequest,
+                            response: WebResourceResponse,
+                        ) {
+                            note(
+                                "HTTP " +
+                                    response.statusCode +
+                                    " " +
+                                    response.reasonPhrase +
+                                    " [" +
+                                    request.method +
+                                    " " +
+                                    request.url.buildUpon().clearQuery().fragment(null).build() +
+                                    "]"
+                            )
                         }
                     }
                 web.addJavascriptInterface(
@@ -244,16 +327,21 @@ class WebViewFrameRenderer(
                 val fg = if (dark) "#edf4dd" else "#29351e"
                 val muted = if (dark) "#b8c9a4" else "#69765b"
                 val accent = if (dark) "#c8ed7e" else "#a6c566"
+                val diagnosticsScript =
+                    context.assets.open("kadr-diagnostics.js").bufferedReader().use {
+                        it.readText()
+                    }
                 val inject =
                     """
                 <meta name="viewport" content="width=$widthDp, initial-scale=1, maximum-scale=1">
                 <style>:root{--kadr-bg:$bg;--kadr-fg:$fg;--kadr-muted:$muted;--kadr-accent:$accent;--kadr-controls-width:${WidgetPolicy.controlsWidth}px;--kadr-controls-height:${WidgetPolicy.controlsHeight}px;color-scheme:${if(dark)"dark" else "light"}}html,body{margin:0;overflow:hidden;background:var(--kadr-bg);color:var(--kadr-fg)}*{animation:none!important;transition:none!important;box-sizing:border-box}::-webkit-scrollbar{display:none}</style>
                 <script>
+                $diagnosticsScript
                 window.Kadr=Object.freeze({locale:'${environment.locale}',theme:'${if(dark)"dark" else "light"}',width:$widthDp,height:$heightDp,controls:Object.freeze({width:${WidgetPolicy.controlsWidth},height:${WidgetPolicy.controlsHeight}}),
-                    ready:async function(){try{await document.fonts.ready;await Promise.all(Array.from(document.images).map(i=>i.decode()));__KadrSignal.ready();}catch(e){__KadrSignal.fail(${org.json.JSONObject.quote(localized.getString(R.string.render_resource_failed))}+e.message);}},
-                    fail:function(message){__KadrSignal.fail(String(message));}});
-                window.addEventListener('error',e=>Kadr.fail(e.message||${org.json.JSONObject.quote(localized.getString(R.string.js_failed))}));
-                window.addEventListener('unhandledrejection',e=>Kadr.fail(e.reason?.message||String(e.reason)));
+                    ready:async function(){try{await document.fonts.ready;await Promise.all(Array.from(document.images).map(i=>i.decode()));__KadrSignal.ready();}catch(e){Kadr.fail(${org.json.JSONObject.quote(localized.getString(R.string.render_resource_failed))},e);}},
+                    fail:function(message,details){__KadrSignal.fail(__kadrDescribeFailure(message,details));}});
+                window.addEventListener('error',e=>Kadr.fail(e.error||e.message||${org.json.JSONObject.quote(localized.getString(R.string.js_failed))},{source:e.filename,line:e.lineno,column:e.colno}));
+                window.addEventListener('unhandledrejection',e=>Kadr.fail(e.reason,{event:'unhandledrejection'}));
                 </script>
             """
                         .trimIndent()

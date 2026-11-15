@@ -140,8 +140,11 @@ class MainActivity : LocalizedActivity() {
                             exportHtml = it
                             saveFile.launch("kadr.html")
                         },
-                        copyAi = { copy(services.content.aiInstructions(), true) },
-                        copyContract = { copy(services.content.contract(), false) },
+                        copyAi = {
+                            copy(services.content.aiInstructions(), "Kadr AI instructions")
+                        },
+                        copyContract = { copy(services.content.contract(), "Kadr SDK contract") },
+                        copyError = { copy(it, "Kadr error") },
                         contractText = services.content.contract(),
                         aiText = services.content.aiInstructions(),
                     ),
@@ -156,10 +159,8 @@ class MainActivity : LocalizedActivity() {
         incomingProject = intent.getStringExtra("project")
     }
 
-    private fun copy(text: String, ai: Boolean) {
+    private fun copy(text: String, label: String) {
         getSystemService(ClipboardManager::class.java)
-            .setPrimaryClip(
-                ClipData.newPlainText(if (ai) "Kadr AI instructions" else "Kadr SDK contract", text)
-            )
+            .setPrimaryClip(ClipData.newPlainText(label, text))
     }
 }

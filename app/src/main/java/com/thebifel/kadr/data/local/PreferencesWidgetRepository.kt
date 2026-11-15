@@ -117,7 +117,7 @@ class PreferencesWidgetRepository(context: Context) : WidgetRepository {
                 result(id)
                     .copy(
                         attempt = System.currentTimeMillis(),
-                        error = message.take(180),
+                        error = com.thebifel.kadr.domain.model.FailureDetails.limit(message),
                         pending = 0,
                     )
             check(

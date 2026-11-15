@@ -2,6 +2,7 @@ package com.thebifel.kadr.presentation.editor
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.thebifel.kadr.domain.model.FailureDetails
 import com.thebifel.kadr.domain.model.Project
 import com.thebifel.kadr.domain.port.*
 import com.thebifel.kadr.domain.usecase.DeleteProject
@@ -177,8 +178,7 @@ class EditorViewModel(
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (error: Exception) {
-                    if (session.generation == generation)
-                        session.error = error.message ?: error.javaClass.simpleName
+                    if (session.generation == generation) session.error = FailureDetails.from(error)
                 } finally {
                     if (session.generation == generation) session.busy = false
                     publishSession()
@@ -286,9 +286,7 @@ class EditorViewModel(
                 throw cancelled
             } catch (error: Exception) {
                 mutableState.value =
-                    mutableState.value.copy(
-                        operationError = error.message ?: error.javaClass.simpleName
-                    )
+                    mutableState.value.copy(operationError = FailureDetails.from(error))
             } finally {
                 mutableState.value = mutableState.value.copy(actionBusy = false)
             }

@@ -6,6 +6,7 @@ data class EditorPlatformActions(
     val exportHtml: (String) -> Unit,
     val copyAi: () -> Unit,
     val copyContract: () -> Unit,
+    val copyError: (String) -> Unit,
     val contractText: String,
     val aiText: String,
 )

@@ -8,6 +8,7 @@ import android.graphics.Rect
 import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.WorkManager
@@ -17,6 +18,8 @@ import com.thebifel.kadr.data.rendering.BitmapFrame
 import com.thebifel.kadr.di.appContainer
 import com.thebifel.kadr.domain.model.*
 import com.thebifel.kadr.platform.LocaleSupport
+import com.thebifel.kadr.presentation.editor.EditorEvent
+import com.thebifel.kadr.presentation.editor.EditorViewModel
 import java.util.UUID
 import org.junit.Assert.*
 import org.junit.Test
@@ -279,6 +282,84 @@ class EditorAcceptanceTest {
         } finally {
             instrumentation.runOnMainSync { activity.finish() }
             repo.unbind(90010)
+            WorkManager.getInstance(context).cancelUniqueWork("manual.${p.id}").result.get()
+            WorkManager.getInstance(context).cancelUniqueWork("periodic.${p.id}").result.get()
+            repo.delete(p.id)
+        }
+    }
+
+    @Test
+    fun previewErrorCopyAppearsImmediatelyCopiesCurrentTextAndDisappearsAfterRecovery() {
+        val repo = PreferencesWidgetRepository(context)
+        val valid =
+            "<html><head><meta name='kadr-network' content='none'></head><body><script>Kadr.ready()</script></body></html>"
+        val p =
+            Project(
+                id = "test-copy-error-" + UUID.randomUUID(),
+                name = "Error clipboard acceptance",
+                html = valid,
+                interval = 0,
+                autoTheme = false,
+            )
+        repo.save(p)
+        val cached = Bitmap.createBitmap(20, 10, Bitmap.Config.ARGB_8888)
+        repo.publish(p, BitmapFrame(cached))
+        cached.recycle()
+        val activity =
+            instrumentation.startActivitySync(
+                Intent(context, MainActivity::class.java)
+                    .putExtra("project", p.id)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            )
+        val c = LocaleSupport.localized(context)
+        val copyLabel = c.getString(R.string.copy_error)
+        fun copyVisible() = nodes().any { it.contentDescription?.toString() == copyLabel }
+        try {
+            waitUntil {
+                nodes().any {
+                    it.contentDescription?.toString() == c.getString(R.string.refresh_preview)
+                }
+            }
+            assertFalse(copyVisible())
+            lateinit var model: EditorViewModel
+            instrumentation.runOnMainSync {
+                val owner = activity as MainActivity
+                model =
+                    ViewModelProvider(owner, owner.defaultViewModelProviderFactory)[
+                        EditorViewModel::class.java]
+            }
+            val message = "TEST_COPY_ERROR: request failed\nSecond diagnostic line"
+            val broken =
+                "<html><head><meta name='kadr-network' content='none'></head><body><script>Kadr.fail(" +
+                    org.json.JSONObject.quote(message) +
+                    ")</script></body></html>"
+            instrumentation.runOnMainSync { model.onEvent(EditorEvent.ImportHtml(broken)) }
+            click(c.getString(R.string.refresh_preview), scroll = false)
+            waitUntil { model.state.value.previewError.contains(message) && copyVisible() }
+            val displayedError = model.state.value.previewError
+            // Copy is available while raw error details are still collapsed.
+            assertFalse(nodes().any { it.text?.contains(message) == true })
+            click(copyLabel, scroll = false)
+            val clipboard = context.getSystemService(ClipboardManager::class.java)
+            waitUntil { clipboard.primaryClip?.getItemAt(0)?.text?.toString() == displayedError }
+
+            val replacement = "TEST_COPY_ERROR: newer operation failure"
+            instrumentation.runOnMainSync { model.onEvent(EditorEvent.ReportError(replacement)) }
+            instrumentation.waitForIdleSync()
+            click(copyLabel, scroll = false)
+            waitUntil { clipboard.primaryClip?.getItemAt(0)?.text?.toString() == replacement }
+
+            instrumentation.runOnMainSync { model.onEvent(EditorEvent.ImportHtml(valid)) }
+            click(c.getString(R.string.refresh_preview), scroll = false)
+            waitUntil {
+                model.state.value.showDraft &&
+                    !model.state.value.previewBusy &&
+                    model.state.value.previewError.isEmpty()
+            }
+            instrumentation.waitForIdleSync()
+            assertFalse(copyVisible())
+        } finally {
+            instrumentation.runOnMainSync { activity.finish() }
             WorkManager.getInstance(context).cancelUniqueWork("manual.${p.id}").result.get()
             WorkManager.getInstance(context).cancelUniqueWork("periodic.${p.id}").result.get()
             repo.delete(p.id)

@@ -231,7 +231,8 @@ class ProjectActionsTest {
                 environment,
                 host,
             )(project.id)
-        assertEquals(RefreshOutcome.Failed("Offline"), outcome)
+        assertTrue(outcome is RefreshOutcome.Failed)
+        assertTrue((outcome as RefreshOutcome.Failed).message.contains("Offline"))
         assertEquals(cached.file, repository.result(project.id).file)
         assertEquals(cached.success, repository.result(project.id).success)
     }

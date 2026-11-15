@@ -8,7 +8,7 @@ Available globals:
 • Kadr.width / Kadr.height: the full widget viewport in CSS pixels, including the area behind native controls. No footer height is subtracted.
 • Kadr.controls.width / Kadr.controls.height: the bottom-right control area, currently 144 × 56 CSS pixels including edge spacing.
 • await Kadr.ready(): call once after all asynchronous work and DOM/Vue/Canvas updates are complete. Kadr waits for fonts and images before capturing.
-• Kadr.fail(message): abort this update and retain the last successful frame.
+• Kadr.fail(messageOrError, details?): abort this update and retain the last successful frame. Pass the original Error and/or structured diagnostic details to preserve its stack and cause. Kadr adds viewport, layout and WebView context; the error can be copied from preview. Keep credentials out of diagnostic details.
 
 CSS tokens: --kadr-bg, --kadr-fg, --kadr-muted, --kadr-accent.
 Use these for automatic light/dark appearance. Fit all content into the available size. Kadr supplies the viewport.

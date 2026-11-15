@@ -34,3 +34,26 @@ Preview refresh now has its own successful timestamp and does not mark an unchan
 ## Limits
 
 Tested on the API35 emulator, not physical devices/OEM launchers. The middle-left swipe area is deliberately bounded to coexist with Android gesture navigation. The API35 1.0.0 offline reboot recovery verification remains applicable to the unchanged recovery/storage/scheduler code; an additional reboot was not performed for this UI release. No Play Store package or Direct Boot support is claimed.
+
+## Local follow-up: copy preview error — 2026-11-14
+
+Added an accessible copy-error icon beside the error indicator. It is visible
+only while the preview error area has a current error, works with collapsed
+details, copies that exact current message through the Android platform callback,
+and disappears when the error clears. English/Ukrainian labels are included.
+
+Debug APK/test APK, domain tests, Android lint and Kotlin formatting passed
+(`artifacts/copy-preview-error-build-final.log`). A new instrumentation regression
+covers visibility, multiline copying, replacement messages and recovery; it
+compiled but was not executed. Emulator startup failed before installation,
+and the user explicitly stopped further test work. No successful device/UI test
+is claimed for this follow-up.
+
+The compatible signing certificate was compared with the downloaded 1.1.0
+release. Local APK and checksum are in ignored `artifacts/copy-preview-error/`.
+This is a local build with the existing 1.1.0 package version; the public release
+has not been replaced or published by this change.
+
+The owner-requested local distribution copy and checksum matched the built APK.
+Existing release files were retained; no additional application tests were run.
+The subsequent versioned patch is documented in [1.1.1](patch-1.1.1.md).
