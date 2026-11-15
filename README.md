@@ -89,7 +89,7 @@ Background updates use WorkManager. The minimum periodic interval is 15 minutes,
 
 ## Development
 
-[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [1.1.3 patch notes](specs/003-minimal-editor/patch-1.1.3.md) · [Product specification](specs/001-programmable-widget/spec.md)
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [1.1.4 patch notes](specs/003-minimal-editor/patch-1.1.4.md) · [Product specification](specs/001-programmable-widget/spec.md)
 
 Bundled Vue is distributed under its [MIT license](app/src/main/assets/VUE-LICENSE.txt).
 

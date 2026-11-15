@@ -5,12 +5,14 @@ import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalSize
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.*
 import androidx.glance.appwidget.action.actionSendBroadcast
@@ -27,6 +29,7 @@ import com.thebifel.kadr.data.rendering.asBitmap
 import com.thebifel.kadr.di.appContainer
 import com.thebifel.kadr.domain.model.*
 import com.thebifel.kadr.platform.LocaleSupport
+import kotlin.math.roundToInt
 
 /** UI is Glance/Compose; HTML is already a persisted, inert bitmap. */
 class KadrGlanceWidget : GlanceAppWidget() {
@@ -54,6 +57,17 @@ class KadrGlanceWidget : GlanceAppWidget() {
                         0xFFB8C9A4
                     else 0xFF69765B
                 )
+            val bounds = LocalSize.current
+            val size =
+                RenderSize(
+                    bounds.width.value.roundToInt().coerceAtLeast(1),
+                    bounds.height.value.roundToInt().coerceAtLeast(1),
+                )
+            val radius = project?.radius ?: 24
+            val display =
+                remember(frame.file, project?.id, radius, size, bg) {
+                    WidgetFrameShape.render(bitmap, size, radius, bg.toArgb())
+                }
             val open =
                 if (project == null)
                     Intent(context, ConfigureActivity::class.java)
@@ -64,23 +78,25 @@ class KadrGlanceWidget : GlanceAppWidget() {
                         .setData(android.net.Uri.parse("kadr://edit/${project.id}"))
             Box(
                 GlanceModifier.fillMaxSize()
-                    .background(bg)
-                    .cornerRadius((project?.radius ?: 24).dp)
+                    .background(Color.Transparent)
+                    // The image owns its rounded alpha; opt out of an additional host outline.
+                    .cornerRadius(0.dp)
                     .appWidgetBackground(),
                 contentAlignment = Alignment.BottomEnd,
             ) {
-                if (bitmap != null)
-                    Image(
-                        ImageProvider(bitmap),
+                Image(
+                    ImageProvider(display),
+                    if (bitmap != null)
                         localized.getString(
                             R.string.frame_description,
                             project?.name ?: "Kadr",
                             WidgetPresentation.stamp(frame.success),
-                        ),
-                        GlanceModifier.fillMaxSize().clickable(actionStartActivity(open)),
-                        contentScale = ContentScale.Fit,
-                    )
-                else
+                        )
+                    else null,
+                    GlanceModifier.fillMaxSize().clickable(actionStartActivity(open)),
+                    contentScale = ContentScale.FillBounds,
+                )
+                if (bitmap == null)
                     Box(
                         GlanceModifier.fillMaxSize().clickable(actionStartActivity(open)),
                         contentAlignment = Alignment.Center,

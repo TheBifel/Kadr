@@ -44,4 +44,4 @@ These values are read from the environment. Keystores, `.env.local`, tokens and 
 
 Build and verify the APK, copy it under a versioned filename, generate a SHA-256 checksum and attach both to the matching release. Downloads are debug builds, not Play Store packages. Check packaged assets and compare the signing certificate with the previous release before distributing an update.
 
-See [1.1.3 patch notes](../specs/003-minimal-editor/patch-1.1.3.md) for the actual tested environment and limits.
+See [1.1.4 patch notes](../specs/003-minimal-editor/patch-1.1.4.md) for the actual tested environment and limits.
