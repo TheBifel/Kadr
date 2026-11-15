@@ -3,4 +3,14 @@ Return only one complete HTML document, without Markdown fences or explanations.
 
 Layout: the HTML fills the entire widget. Kadr overlays the last-success time and refresh button in the bottom-right corner, occupying Kadr.controls.width × Kadr.controls.height (currently 144 × 56 CSS pixels, including edge spacing). The app does not add padding or subtract a footer. Your HTML must reserve that corner using its own layout and the CSS variables --kadr-controls-width / --kadr-controls-height. Keep important content clear of the controls; use the space to their left instead of leaving an empty full-width bottom strip. Extend the background to every edge. Adapt the layout to the supplied viewport size.
 
+
+Adaptive layout and failure reporting:
+• Apply the user's filters before packing items. For example, comparison data must not reintroduce current-period zero items when the user asked to hide them.
+• Use the measured CSS viewport and element bounds. Kadr.width/height can differ from innerWidth/height or documentElement.clientWidth/height by about one CSS pixel due to density rounding. Fit within the available measurements and allow a small rounding tolerance; do not fail on harmless subpixel differences.
+• Measure the header after fonts/layout settle, then calculate the remaining chart area. Avoid fixed chart offsets that assume a particular header height.
+• Calculate item capacity in each usable column or region, including gaps and the native control corner. A container/background may span that corner; only important rendered content must stay clear. Do not mistake the container itself for overlapping content.
+• Prefer spacious cards when they fit. When they do not, progressively reduce padding/gaps, use compact cards, then compact rows or another readable arrangement. Do not fix one minimum card height and immediately fail when there are more items. Preserve every requested item; use top-N or a remainder only when the user asked for it.
+• Preserve complete monetary values. Intentional CSS ellipsis/clipping for names or secondary labels is not by itself a render failure. Check actual required content overflow rather than rejecting every scrollWidth > clientWidth measurement.
+• If all readable layouts genuinely fail, report the specific constraint, not only "Make the widget larger". Use a code such as LAYOUT_CAPACITY, HEADER_OVERFLOW or CARD_OVERFLOW and include measured viewport, item count, column dimensions/capacities, minimum sizes/gaps and affected selectors in an Error/details object passed to Kadr.fail. Preserve the original stack/cause; exclude credentials, raw HTML and unrelated private data.
+
 My task: [describe the desired content, data source and layout here]
